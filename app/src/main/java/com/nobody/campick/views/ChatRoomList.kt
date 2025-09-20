@@ -1,5 +1,6 @@
 package com.nobody.campick.views
 
+import ChatListModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,7 +21,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.nobody.campick.R
-import com.nobody.campick.models.chat.ChatListModel
 
 // 채팅방 데이터 모델
 
