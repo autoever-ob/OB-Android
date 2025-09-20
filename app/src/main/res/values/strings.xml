@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">campick</string>
+    <string name="title_activity_bottom_banner">BottomBanner</string>
+    <string name="title_activity_home">Home</string>
 </resources>
