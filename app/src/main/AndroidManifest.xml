@@ -12,6 +12,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Campick">
         <activity
+            android:name=".views.Home"
+            android:exported="false"
+            android:label="@string/title_activity_home"
+            android:theme="@style/Theme.Campick" />
+        <activity
+            android:name=".Components.BottomBanner"
+            android:exported="false"
+            android:label="@string/title_activity_bottom_banner"
+            android:theme="@style/Theme.Campick" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
