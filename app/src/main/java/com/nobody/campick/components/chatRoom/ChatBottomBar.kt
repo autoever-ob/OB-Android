@@ -26,7 +26,6 @@ fun ChatBottomBar(
     newMessage: String,
     onMessageChange: (String) -> Unit,
     pendingImage: Any?,
-    showAttachmentMenu: Boolean,
     onToggleAttachment: () -> Unit,
     onSend: () -> Unit
 ) {

@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.nobody.campick.components.chatRoom.AttachmentMenu
 import com.nobody.campick.components.chatRoom.ChatBottomBar
 import com.nobody.campick.components.chatRoom.ChatHeader
 import com.nobody.campick.components.chatRoom.MessageBubble
@@ -31,7 +32,7 @@ fun ChatRoom(
     var showAttachmentMenu by remember { mutableStateOf(false) }
     var messages by remember { mutableStateOf(mockMessages()) }
     var isTyping by remember { mutableStateOf(false) }
-
+Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -52,13 +53,10 @@ fun ChatRoom(
             modifier = Modifier.weight(1f)
         )
 
-
-        // BottomBar
         ChatBottomBar(
             newMessage = newMessage,
             onMessageChange = { newMessage = it },
             pendingImage = pendingImage,
-            showAttachmentMenu = false,
             onToggleAttachment = { showAttachmentMenu = !showAttachmentMenu },
             onSend = {
                 if (newMessage.isNotBlank()) {
@@ -74,8 +72,17 @@ fun ChatRoom(
                     newMessage = ""
                 }
             }
-
         )
+}
+        if(showAttachmentMenu) {
+            AttachmentMenu(
+                onDismiss = {showAttachmentMenu = false},
+                showAttachmentMenu = showAttachmentMenu,
+                onSelectGallery = { /* 갤러리 선택 */ },
+                onSelectCamera = { /* 카메라 선택 */ }
+            )
+        }
+        // BottomBar
     }
 }
 
