@@ -1,0 +1,659 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/brand_background"
+    tools:context=".activities.VehicleRegistrationActivity">
+
+    <!-- Common Header -->
+    <com.nobody.campick.views.components.CommonHeader
+        android:id="@+id/commonHeader"
+        android:layout_width="match_parent"
+        android:layout_height="56dp" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="56dp"
+        android:layout_marginBottom="120dp"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- VehicleRegistrationTitleSection -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="차량 정보를 입력해주세요"
+                android:textColor="@color/primary_text"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="32dp" />
+
+            <!-- VehicleImageUploadSection -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="차량 이미지"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="차량 이미지"
+                        android:textColor="@color/field_label"
+                        android:textSize="12sp"
+                        android:textStyle="normal" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/textViewImageCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0/10"
+                            android:textColor="@color/brand_white_60"
+                            android:textSize="12sp" />
+
+                        <ProgressBar
+                            android:id="@+id/progressBarProductInfo"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginStart="8dp"
+                            android:visibility="gone"
+                            style="?android:attr/progressBarStyleSmall" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Swift UI 스타일 3x3 그리드 -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewImages"
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/textViewImageError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 매물 제목 (Swift UI StyledInputContainer 스타일) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="매물 제목"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <FrameLayout
+                    android:id="@+id/titleInputContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/styled_input_background">
+
+                    <EditText
+                        android:id="@+id/editTextTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:hint="매물 제목을 입력하세요"
+                        android:textColor="@color/primary_text"
+                        android:textColorHint="@color/brand_white_70"
+                        android:textSize="14sp"
+                        android:background="@android:color/transparent"
+                        android:paddingHorizontal="12dp"
+                        android:inputType="text"
+                        android:maxLines="1" />
+
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/textViewTitleError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 연식 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="연식"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <FrameLayout
+                    android:id="@+id/generationInputContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/styled_input_background">
+
+                    <EditText
+                        android:id="@+id/editTextGeneration"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:hint="연식을 입력하세요 (예: 2020)"
+                        android:textColor="@color/primary_text"
+                        android:textColorHint="@color/brand_white_70"
+                        android:textSize="14sp"
+                        android:background="@android:color/transparent"
+                        android:paddingHorizontal="12dp"
+                        android:inputType="number"
+                        android:maxLines="1" />
+
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/textViewGenerationError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 주행거리 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="주행거리"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <FrameLayout
+                    android:id="@+id/mileageInputContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/styled_input_background">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="12dp">
+
+                        <EditText
+                            android:id="@+id/editTextMileage"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:hint="주행거리를 입력하세요"
+                            android:textColor="@color/primary_text"
+                            android:textColorHint="@color/brand_white_70"
+                            android:textSize="14sp"
+                            android:background="@android:color/transparent"
+                            android:inputType="number"
+                            android:maxLines="1" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="km"
+                            android:textColor="@color/brand_white_70"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/textViewMileageError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 차량 종류 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="차량 종류"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <Button
+                    android:id="@+id/buttonVehicleType"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="차량 종류 선택"
+                    android:textColor="@color/primary_text"
+                    android:textSize="14sp"
+                    android:gravity="start|center_vertical"
+                    android:background="@drawable/styled_input_background"
+                    android:paddingHorizontal="12dp" />
+
+                <TextView
+                    android:id="@+id/textViewVehicleTypeError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 차량 브랜드/모델 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="차량 브랜드/모델"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <Button
+                    android:id="@+id/buttonVehicleModel"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="차량 브랜드/모델 선택"
+                    android:textColor="@color/primary_text"
+                    android:textSize="14sp"
+                    android:gravity="start|center_vertical"
+                    android:background="@drawable/styled_input_background"
+                    android:paddingHorizontal="12dp" />
+
+                <TextView
+                    android:id="@+id/textViewVehicleModelError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 판매 가격 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="판매 가격"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <FrameLayout
+                    android:id="@+id/priceInputContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/styled_input_background">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="12dp">
+
+                        <EditText
+                            android:id="@+id/editTextPrice"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:hint="가격을 입력하세요"
+                            android:textColor="@color/primary_text"
+                            android:textColorHint="@color/brand_white_70"
+                            android:textSize="14sp"
+                            android:background="@android:color/transparent"
+                            android:inputType="number"
+                            android:maxLines="1" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="만원"
+                            android:textColor="@color/brand_white_70"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/textViewPriceError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 판매 지역 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="판매 지역"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <FrameLayout
+                    android:id="@+id/locationInputContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/styled_input_background">
+
+                    <EditText
+                        android:id="@+id/editTextLocation"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:hint="판매 지역을 입력하세요 (예: 서울시 강남구)"
+                        android:textColor="@color/primary_text"
+                        android:textColorHint="@color/brand_white_70"
+                        android:textSize="14sp"
+                        android:background="@android:color/transparent"
+                        android:paddingHorizontal="12dp"
+                        android:inputType="text"
+                        android:maxLines="1" />
+
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/textViewLocationError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 차량 번호 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="차량 번호"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <FrameLayout
+                    android:id="@+id/plateHashInputContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/styled_input_background">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="12dp">
+
+                        <EditText
+                            android:id="@+id/editTextPlateHash"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:hint="123가4567"
+                            android:textColor="@color/primary_text"
+                            android:textColorHint="@color/brand_white_70"
+                            android:textSize="14sp"
+                            android:background="@android:color/transparent"
+                            android:inputType="text"
+                            android:maxLines="1" />
+
+                        <ImageView
+                            android:id="@+id/imageViewPlateHashStatus"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:visibility="gone" />
+
+                    </LinearLayout>
+
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/textViewPlateHashError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- 차량 옵션 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="차량 옵션"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:background="@drawable/styled_input_background"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground">
+
+                    <Button
+                        android:id="@+id/buttonVehicleOptions"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="옵션을 선택하세요"
+                        android:textColor="@color/brand_white_60"
+                        android:textSize="14sp"
+                        android:gravity="start|center_vertical"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:background="@android:color/transparent"
+                        style="?android:attr/borderlessButtonStyle" />
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="12dp"
+                        android:src="@android:drawable/arrow_down_float"
+                        app:tint="@color/brand_white_60" />
+
+                </FrameLayout>
+
+            </LinearLayout>
+
+            <!-- 상세 설명 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="32dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="상세 설명"
+                    android:textColor="@color/field_label"
+                    android:textSize="12sp"
+                    android:textStyle="normal"
+                    android:layout_marginBottom="4dp" />
+
+                <FrameLayout
+                    android:id="@+id/descriptionInputContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:background="@drawable/styled_input_background">
+
+                    <EditText
+                        android:id="@+id/editTextDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:hint="차량에 대한 상세한 설명을 입력하세요"
+                        android:textColor="@color/primary_text"
+                        android:textColorHint="@color/brand_white_70"
+                        android:textSize="14sp"
+                        android:background="@android:color/transparent"
+                        android:padding="12dp"
+                        android:inputType="textMultiLine"
+                        android:gravity="top" />
+
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/textViewDescriptionError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/input_border_error"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- VehicleSubmitButton (Swift UI 스타일) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="8dp">
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="8dp"
+                    android:visibility="gone"
+                    style="?android:attr/progressBarStyleSmall" />
+
+                <Button
+                    android:id="@+id/buttonSubmit"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="매물 등록하기"
+                    android:textColor="@color/primary_text"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/gradient_orange_button" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

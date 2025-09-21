@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/dialogContainer"
+        android:layout_width="320dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="20dp"
+        app:cardBackgroundColor="@color/background_dark">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="0dp">
+
+                <!-- Header Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="32dp"
+                    android:paddingBottom="24dp">
+
+                    <!-- Warning Icon -->
+                    <ImageView
+                        android:id="@+id/imageViewIcon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginBottom="16dp"
+                        android:src="@drawable/ic_error_circle"
+                        app:tint="@color/red" />
+
+                    <!-- Title -->
+                    <TextView
+                        android:id="@+id/textViewTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="회원 탈퇴"
+                        android:textColor="@color/brand_white"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Message -->
+                    <TextView
+                        android:id="@+id/textViewMessage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="정말로 회원 탈퇴를 하시겠습니까?\n\n탈퇴 후에는 모든 데이터가 삭제되며\n복구할 수 없습니다."
+                        android:textColor="@color/brand_white_80"
+                        android:textSize="14sp"
+                        android:textAlignment="center"
+                        android:gravity="center"
+                        android:lineSpacingExtra="4dp"
+                        android:layout_marginBottom="16dp" />
+
+                </LinearLayout>
+
+                <!-- Confirmation Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="24dp"
+                    android:paddingBottom="24dp">
+
+                    <!-- Instruction -->
+                    <TextView
+                        android:id="@+id/textViewInstruction"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="탈퇴를 원하시면 아래 문구를 정확히 입력해주세요:"
+                        android:textColor="@color/brand_white_70"
+                        android:textSize="12sp"
+                        android:textAlignment="center"
+                        android:gravity="center"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Required text display -->
+                    <TextView
+                        android:id="@+id/textViewRequiredText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text='"이 앱을 탈퇴하겠습니다"'
+                        android:textColor="@color/red"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textAlignment="center"
+                        android:gravity="center"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- Text input field - Simple style like iOS -->
+                    <EditText
+                        android:id="@+id/editTextConfirmation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="이 앱을 탈퇴하겠습니다"
+                        android:textColor="@color/brand_white"
+                        android:textColorHint="@color/brand_white_50"
+                        android:textSize="15sp"
+                        android:inputType="text"
+                        android:maxLines="1"
+                        android:padding="10dp"
+                        android:background="@drawable/styled_input_background"
+                        android:layout_marginBottom="20dp" />
+
+                </LinearLayout>
+
+                <!-- Buttons Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="24dp"
+                    android:paddingBottom="32dp">
+
+                    <!-- Confirm Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonConfirm"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:text="탈퇴하기"
+                        android:textColor="@color/brand_white"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif"
+                        app:backgroundTint="@color/red"
+                        app:cornerRadius="8dp"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- Cancel Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonCancel"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:text="취소"
+                        android:textColor="@color/brand_white_80"
+                        android:textSize="14sp"
+                        android:fontFamily="sans-serif"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        app:strokeColor="@color/brand_white_20"
+                        app:strokeWidth="1dp"
+                        app:cornerRadius="8dp"
+                        app:backgroundTint="@color/brand_white_10" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </ScrollView>
+
+    </androidx.cardview.widget.CardView>
+
+</FrameLayout>

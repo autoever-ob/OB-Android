@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Campick" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.Campick" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/brand_orange</item>
         <item name="colorPrimaryDark">@color/brand_background</item>
         <item name="colorAccent">@color/brand_orange</item>
