@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginTop="16dp"
+    android:paddingTop="8dp">
+
+    <!-- Selling Tab -->
+    <LinearLayout
+        android:id="@+id/tabSelling"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:paddingVertical="8dp">
+
+        <TextView
+            android:id="@+id/textViewTabSelling"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="판매중"
+            android:textColor="@color/primary_text"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <View
+            android:id="@+id/indicatorSelling"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/brand_orange"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+    <!-- Sold Tab -->
+    <LinearLayout
+        android:id="@+id/tabSold"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:paddingVertical="8dp">
+
+        <TextView
+            android:id="@+id/textViewTabSold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="판매완료"
+            android:textColor="@color/brand_white_60"
+            android:textSize="16sp"
+            android:textStyle="normal" />
+
+        <View
+            android:id="@+id/indicatorSold"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@android:color/transparent"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+</LinearLayout>
