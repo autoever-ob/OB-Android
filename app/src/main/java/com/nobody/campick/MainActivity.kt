@@ -5,7 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Modifier
 import com.nobody.campick.ui.theme.CampickTheme
 import com.nobody.campick.views.ChatRoomListView
 
@@ -52,15 +55,17 @@ class MainActivity : ComponentActivity() {
                         )
                     )
 
-                    ChatRoomListView(
-                        chats = mockChats,
-                        onChatClick = { chat ->
-                            println("채팅방 클릭됨: ${chat.nickname}")
-                        },
-                        onFindVehicleClick = {
-                            println("매물 찾기 버튼 클릭됨")
-                        },
-                    )
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        ChatRoomListView(
+                            chats = mockChats,
+                            onChatClick = { chat ->
+                                println("채팅방 클릭됨: ${chat.nickname}")
+                            },
+                            onFindVehicleClick = {
+                                println("매물 찾기 버튼 클릭됨")
+                            },
+                        )
+                    }
                 }
             }
         }
