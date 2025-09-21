@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:layout_margin="4dp">
+
+    <!-- 이미지 -->
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="@drawable/styled_input_background" />
+
+    <!-- 업로드 중 오버레이 -->
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            style="?android:attr/progressBarStyleSmall"
+            app:tint="@color/primary_text" />
+
+    </FrameLayout>
+
+    <!-- 메인 라벨 -->
+    <TextView
+        android:id="@+id/textViewMain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="4dp"
+        android:text="메인"
+        android:textColor="@color/primary_text"
+        android:textSize="10sp"
+        android:background="@color/brand_orange"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp"
+        android:visibility="gone" />
+
+    <!-- 버튼들 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp"
+        android:orientation="vertical">
+
+        <!-- 메인 이미지 설정 버튼 (메인이 아닌 경우에만 표시) -->
+        <ImageButton
+            android:id="@+id/buttonSetMain"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginBottom="4dp"
+            android:src="@android:drawable/btn_star_big_off"
+            android:background="@drawable/circle_background_white"
+            android:scaleType="fitCenter"
+            android:contentDescription="메인 이미지로 설정"
+            android:visibility="gone" />
+
+        <!-- 삭제 버튼 -->
+        <ImageButton
+            android:id="@+id/buttonRemove"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_close"
+            android:background="@drawable/circle_background_red"
+            android:scaleType="fitCenter"
+            android:contentDescription="이미지 삭제"
+            app:tint="@color/primary_text"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</FrameLayout>
