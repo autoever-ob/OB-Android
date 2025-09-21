@@ -28,8 +28,8 @@ fun AttachmentMenu(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.35f)) // 반투명 오버레이
-                .clickable { onDismiss() },                 // 바깥 클릭 시 닫기
+                .background(Color.Black.copy(alpha = 0.35f))
+                .clickable { onDismiss() },
             contentAlignment = Alignment.BottomStart
         ) {
             AnimatedVisibility(
