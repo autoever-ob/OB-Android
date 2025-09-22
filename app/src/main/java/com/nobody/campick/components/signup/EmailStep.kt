@@ -1,15 +1,23 @@
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.nobody.campick.resources.theme.AppColors
 import kotlinx.coroutines.delay
 import com.nobody.campick.viewmodels.UserType
@@ -53,7 +61,9 @@ fun EmailStep(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("사용자 유형", color = Color.White.copy(alpha = 0.9f), fontWeight = FontWeight.Bold)
@@ -62,18 +72,51 @@ fun EmailStep(
             Button(
                 onClick = { onUserTypeChange(UserType.Normal) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (userType == UserType.Normal) AppColors.brandOrange else Color.Gray
-                )
+                    containerColor = if (userType == UserType.Normal) AppColors.brandOrange else AppColors.brandOrange50,
+                ),
+                modifier= Modifier
+                    .weight(1f)
+                    .height(50.dp),
+                shape = RoundedCornerShape(8.dp)
+
             ) {
-                Text("일반 사용자")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("일반 사용자")
+                }
             }
             Button(
                 onClick = { onUserTypeChange(UserType.Dealer) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (userType == UserType.Dealer) AppColors.brandOrange else Color.Gray
-                )
+                    containerColor = if (userType == UserType.Dealer) AppColors.brandOrange else AppColors.brandOrange50,
+                ),
+                modifier= Modifier
+                    .weight(1f)
+                    .height(50.dp),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                Text("딜러")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DirectionsCar,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("딜러")
+                }
             }
         }
 
@@ -95,13 +138,24 @@ fun EmailStep(
             // --- 이메일 입력 + 인증하기 ---
             Text("이메일", color = Color.White.copy(alpha = 0.9f), fontWeight = FontWeight.Bold)
 
-            Row {
+            Row (
+                verticalAlignment = Alignment.CenterVertically
+            ){
                 OutlinedTextField(
                     value = email,
                     onValueChange = onEmailChange,
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("이메일을 입력하세요") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = AppColors.brandOrange,
+                        focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                        focusedBorderColor = AppColors.brandOrange,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f)
+                    )
                 )
                 Spacer(Modifier.width(8.dp))
                 Button(
@@ -112,8 +166,17 @@ fun EmailStep(
                         remainingSeconds = 180
                         timerActive = true
                     },
-                    enabled = email.isNotEmpty() && (termsAgreed && privacyAgreed),
-                    modifier = Modifier.width(100.dp)
+                    enabled = email.isNotEmpty(),
+                    colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.brandOrange,
+                    disabledContainerColor = AppColors.brandOrange50,
+                    contentColor = Color.White,
+                    disabledContentColor = Color.White
+                ),
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(50.dp),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(if (isExpired) "재전송" else "인증하기")
                 }
@@ -128,7 +191,17 @@ fun EmailStep(
                     onValueChange = { onCodeChange(it.filter { ch -> ch.isDigit() }) },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("인증번호") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = AppColors.brandOrange,
+                        focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                        focusedBorderColor = AppColors.brandOrange,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f)
+                    )
+
                 )
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -159,7 +232,16 @@ fun EmailStep(
                             }
                         },
                         enabled = termsAgreed && privacyAgreed,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AppColors.brandOrange,
+                            disabledContainerColor = AppColors.brandOrange50,
+                            contentColor = Color.White,
+                            disabledContentColor = Color.White)
+
                     ) {
                         Text("다음", fontWeight = FontWeight.Bold)
                     }
@@ -213,19 +295,22 @@ private fun AgreementRow(
     onDetail: () -> Unit
 ) {
     Row(
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        IconButton(onClick = onToggle) {
-            Icon(
-                imageVector = if (isOn) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
-                contentDescription = null,
-                tint = if (isOn) AppColors.brandOrange else Color.White.copy(alpha = 0.8f)
-            )
-        }
-        Text(title, color = Color.White, modifier = Modifier.weight(1f))
+        Icon(
+            imageVector = if (isOn) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+            contentDescription = null,
+            tint = if (isOn) AppColors.brandOrange else Color.White.copy(alpha = 0.8f),
+            modifier = Modifier
+                .size(24.dp)
+                .clickable { onToggle() }
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(title, color = Color.White, modifier = Modifier.weight(1f), fontSize = 14.sp)
         TextButton(onClick = onDetail) {
-            Text("보기", color = AppColors.brandOrange, fontWeight = FontWeight.SemiBold)
+            Text("보기", color = AppColors.brandOrange80, fontWeight = FontWeight.SemiBold)
         }
     }
 }

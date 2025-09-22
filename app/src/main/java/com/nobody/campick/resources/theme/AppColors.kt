@@ -62,6 +62,9 @@ object AppColors {
     /** 브랜드 오렌지 80% 투명도 */
     val brandOrange80 = brandOrange.copy(alpha = 0.8f)
 
+    /** 브랜드 오렌지 50% 투명도 */
+    val brandOrange50 = brandOrange.copy(alpha = 0.5f)
+
     /** 브랜드 오렌지 20% 투명도 */
     val brandOrange20 = brandOrange.copy(alpha = 0.2f)
 
