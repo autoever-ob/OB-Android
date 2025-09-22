@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -19,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.nobody.campick.resources.theme.AppColors
 
 @Composable
 fun NicknameStep(
@@ -68,15 +70,25 @@ fun NicknameStep(
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Button(
                 onClick = onCameraClick,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
-                modifier = Modifier.width(120.dp).height(40.dp)
+                modifier = Modifier.width(120.dp).height(40.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.brandOrange,
+                    disabledContainerColor = AppColors.brandOrange50,
+                    contentColor = Color.White,
+                    disabledContentColor = Color.White),
             ) {
                 Text("사진 찍기", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
             }
             Button(
                 onClick = onGalleryClick,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
-                modifier = Modifier.width(120.dp).height(40.dp)
+                modifier = Modifier.width(120.dp).height(40.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.brandOrange,
+                    disabledContainerColor = AppColors.brandOrange50,
+                    contentColor = Color.White,
+                    disabledContentColor = Color.White),
             ) {
                 Text("갤러리", fontSize = MaterialTheme.typography.bodyMedium.fontSize)
             }
@@ -86,7 +98,8 @@ fun NicknameStep(
 
         // 닉네임 입력
         Column(modifier = Modifier.fillMaxWidth()) {
-            Text("닉네임", color = Color.White.copy(alpha = 0.9f), fontWeight = FontWeight.Bold)
+            Text("닉네임", color = Color.White.copy(alpha = 0.9f), fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom=10.dp))
             OutlinedTextField(
                 value = nickname,
                 onValueChange = onNicknameChange,
@@ -95,14 +108,15 @@ fun NicknameStep(
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 singleLine = true,
-                colors = TextFieldDefaults.colors(
+                colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
+                    cursorColor = AppColors.brandOrange,
                     focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
                     unfocusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
-                )
+                    focusedBorderColor = AppColors.brandOrange,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.5f)
+                ),
             )
         }
 
@@ -113,8 +127,13 @@ fun NicknameStep(
             Button(
                 onClick = onNext,
                 enabled = !isSubmitting,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
-                modifier = Modifier.fillMaxWidth().height(48.dp)
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.brandOrange,
+                    disabledContainerColor = AppColors.brandOrange50,
+                    contentColor = Color.White,
+                    disabledContentColor = Color.White),
             ) {
                 Text(
                     if (isSubmitting) "처리 중..." else "가입 완료",

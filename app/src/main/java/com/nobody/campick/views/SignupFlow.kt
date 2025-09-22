@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignupFlow(
     navController: NavController,
-    vm: SignupFlowViewModel = viewModel()
+    vm: SignupFlowViewModel = viewModel(),
+    onComplete: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -149,7 +150,7 @@ fun SignupFlow(
     LaunchedEffect(vm.shouldNavigateHome) {
         if (vm.shouldNavigateHome) {
             vm.shouldNavigateHome = false
-            navController.popBackStack() // 또는 navController.navigate("home")
+            onComplete()
         }
     }
 }

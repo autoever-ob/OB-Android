@@ -1,6 +1,7 @@
 package com.nobody.campick.components.signup
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -8,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nobody.campick.resources.theme.AppColors
 import com.nobody.campick.viewmodels.UserType
 import kotlinx.coroutines.delay
 
@@ -27,7 +29,6 @@ fun PhoneStep(
     onCodeVerified: () -> Unit,
     onDealerVerified: () -> Unit,
 
-    // ✅ VM에 위임할 콜백들
     onNext: () -> Unit,                 // vm.phoneNext()
     onSend: () -> Unit,                 // 코드 발송 트리거(네트워크 등)
     onShowCodeFieldChange: (Boolean) -> Unit // showPhoneCodeField 토글
@@ -50,7 +51,8 @@ fun PhoneStep(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("휴대폰 번호", color = Color.White.copy(alpha = 0.9f), fontWeight = FontWeight.Bold)
@@ -61,12 +63,21 @@ fun PhoneStep(
                 onValueChange = { onPhoneChange(formatPhone(it)) },
                 placeholder = { Text("휴대폰 번호 입력") },
                 modifier = Modifier.weight(1f),
-                singleLine = true
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = AppColors.brandOrange,
+                    focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                    unfocusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                    focusedBorderColor = AppColors.brandOrange,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.5f)
+                ),
+
             )
             Spacer(Modifier.width(8.dp))
             Button(
                 onClick = {
-                    // ✅ VM 상태 변경은 콜백으로
                     onSend()
                     onShowCodeFieldChange(true)
                     showExpiredNotice = false
@@ -75,7 +86,15 @@ fun PhoneStep(
                     timerActive = true
                 },
                 enabled = isValidPhone(phone),
-                modifier = Modifier.width(100.dp)
+                modifier = Modifier
+                    .width(100.dp)
+                    .height(48.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.brandOrange,
+                    disabledContainerColor = AppColors.brandOrange50,
+                    contentColor = Color.White,
+                    disabledContentColor = Color.White),
             ) {
                 Text(if (isExpired) "재전송" else "인증하기")
             }
@@ -89,7 +108,16 @@ fun PhoneStep(
                 onValueChange = { onCodeChange(it.filter { ch -> ch.isDigit() }) },
                 placeholder = { Text("인증번호") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = AppColors.brandOrange,
+                    focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                    unfocusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                    focusedBorderColor = AppColors.brandOrange,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.5f)
+                ),
             )
 
             Row(
@@ -124,7 +152,13 @@ fun PhoneStep(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(48.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.brandOrange,
+                    disabledContainerColor = AppColors.brandOrange50,
+                    contentColor = Color.White,
+                    disabledContentColor = Color.White),
             ) {
                 Text("다음", fontWeight = FontWeight.Bold)
             }
@@ -146,18 +180,32 @@ fun PhoneStep(
                 onValueChange = { onDealerChange(it.filter { ch -> ch.isDigit() }) },
                 placeholder = { Text("딜러 번호 입력") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = AppColors.brandOrange,
+                    focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                    unfocusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                    focusedBorderColor = AppColors.brandOrange,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.5f)
+                ),
             )
 
             if (dealerNumber.isNotEmpty()) {
                 Button(
                     onClick = {
-                        // ✅ 딜러 번호 검증/분기도 VM에서
                         onDealerVerified()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AppColors.brandOrange,
+                        disabledContainerColor = AppColors.brandOrange50,
+                        contentColor = Color.White,
+                        disabledContentColor = Color.White),
                 ) {
                     Text("다음", fontWeight = FontWeight.Bold)
                 }

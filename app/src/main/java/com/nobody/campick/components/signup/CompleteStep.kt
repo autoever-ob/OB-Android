@@ -33,7 +33,7 @@ fun CompleteStep(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black), // SwiftUI 에서 .background(.black) 비슷하게
+            .background(AppColors.brandBackground),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
