@@ -22,15 +22,23 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.nobody.campick.models.home.RecommendedVehicle
+import com.nobody.campick.models.home.RecommendedVehicleStatus
+import com.nobody.campick.resources.theme.AppColors
+import com.nobody.campick.viewmodels.RecommendVehicleViewModel
+
 // 추천 매물 전체 컴포넌트
 @Composable
 fun RecommendVehicle(
-    vehicles: List<VehicleModel>,
-    onAllClick: () -> Unit,
-    onLikeClick: (VehicleModel) -> Unit
-
-
+    viewModel: RecommendVehicleViewModel = viewModel()
 ) {
+    val vehicles by viewModel.vehicles.collectAsState()
+    val error by viewModel.error.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.loadRecommendations()
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // 상단 헤더
         Row(
@@ -52,10 +60,10 @@ fun RecommendVehicle(
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
-            TextButton(onClick = onAllClick) {
+            TextButton(onClick = { }) {
                 Text(
                     text = "전체보기",
-                    color = Color(0xFFFFB74D),
+                    color = AppColors.brandOrange,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -78,14 +86,27 @@ fun RecommendVehicle(
             )
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                vehicles.forEachIndexed { index, vehicle ->
+                vehicles.forEachIndexed { index, dto ->
+                    val vehicle = RecommendedVehicle(
+                        productId = dto.productId,
+                        title = dto.title,
+                        price = "${dto.price}원",
+                        generation = dto.generation,
+                        mileage = "${dto.mileage}km",
+                        location = dto.location,
+                        createdAt = dto.createdAt,
+                        thumbNail = dto.thumbNail ?: "",
+                        status = dto.status,
+                        isLiked = dto.isLiked,
+                        likeCount = dto.likeCount ?: 0
+                    )
                     VehicleCard(
                         vehicle = vehicle,
                         badge = if (index == 0) "NEW" else if (index == 1) "HOT" else null,
                         badgeColor = if (index == 0) Color(0xFF4CAF50)
                         else if (index == 1) Color(0xFFFF6F00)
                         else Color.Transparent,
-                        onLikeClick = { onLikeClick(vehicle) }
+                        onLikeClick = {  }
                     )
                 }
             }
@@ -95,7 +116,7 @@ fun RecommendVehicle(
 
 @Composable
 fun VehicleCard(
-    vehicle: VehicleModel,
+    vehicle: RecommendedVehicle,
     badge: String?,
     badgeColor: Color,
     onLikeClick: () -> Unit
@@ -151,7 +172,7 @@ fun VehicleCard(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                InfoChip(text = vehicle.year)
+                InfoChip(text = vehicle.generation.toString())
                 InfoChip(text = vehicle.mileage)
             }
 
@@ -193,14 +214,3 @@ fun InfoChip(text: String) {
     )
 }
 
-// SwiftUI의 Vehicle 모델 대응
-data class VehicleModel(
-    val id: Int,
-    val title: String,
-    val year: String,
-    val mileage: String,
-    val price: String,
-    val thumbNail: String,
-    val isLiked: Boolean,
-    val likeCount: Int
-)
