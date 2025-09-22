@@ -1,6 +1,6 @@
 package com.nobody.campick.models.chat
 
-
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.util.Date
 
@@ -19,6 +19,7 @@ data class ChatMessage(
     val id: String,
     val text: String = "",
     val imageUrl: String? = null,
+    @Contextual
     val timestamp: Date,
     val isMyMessage: Boolean,
     val type: ChatMessageType,
@@ -31,7 +32,8 @@ data class ChatSeller(
     val name: String,
     val avatar: String,
     val isOnline: Boolean,
-    val lastSeen: Date?,
+    @Contextual
+    val lastSeen: Date? = null,
     val phoneNumber: String
 )
 
