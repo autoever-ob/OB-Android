@@ -25,9 +25,11 @@ class RecommendVehicleViewModel(
             when (val result = service.getRecommendedVehicles()) {
                 is ApiResult.Success -> {
                     _vehicles.value = result.data
+                    android.util.Log.d("추천매물 조회", "Loaded vehicles: ${result.data}")
                 }
                 is ApiResult.Error -> {
                     _error.value = result.message
+                    android.util.Log.e("추천매물 조회", "Error: ${result.message}")
                 }
             }
         }
