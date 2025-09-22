@@ -12,9 +12,11 @@ import com.nobody.campick.activities.VehicleDetailActivity
 import com.nobody.campick.databinding.FragmentHomeBinding
 import com.nobody.campick.ui.theme.CampickTheme
 import com.nobody.campick.viewmodels.LoginViewModel
+import com.nobody.campick.viewmodels.SignupFlowViewModel
 import com.nobody.campick.views.FavoritesView
 import com.nobody.campick.views.Home
 import com.nobody.campick.views.Login
+import com.nobody.campick.views.SignupFlow
 
 class HomeFragment : Fragment() {
     @SuppressLint("ViewModelConstructorInComposable")
@@ -26,11 +28,14 @@ class HomeFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 val navController = rememberNavController()
-                val viewModel = LoginViewModel()
+//                val viewModel = LoginViewModel()
+                val viewModel = SignupFlowViewModel()
 
                 CampickTheme {
-                    Home()
+//                    Home()
+                    SignupFlow(navController, viewModel)
                 }
+
             }
         }
     }
