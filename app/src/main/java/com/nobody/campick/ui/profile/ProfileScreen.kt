@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
@@ -26,19 +27,35 @@ import com.nobody.campick.resources.theme.AppColors
 import androidx.compose.ui.text.TextStyle
 import com.nobody.campick.extensions.titleFont
 import com.nobody.campick.extensions.bodyFont
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.nobody.campick.viewmodels.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
+    memberId: String? = null,
+    isOwnProfile: Boolean = true,
+    showBackButton: Boolean = false,
+    onBackClick: () -> Unit = {},
     onEditProfile: () -> Unit = {},
     onLogout: () -> Unit = {},
     onAccountDeletion: () -> Unit = {},
-    onSettingsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    viewModel: ProfileViewModel = viewModel()
 ) {
+    val profileData by viewModel.profileData.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showEditProfileDialog by remember { mutableStateOf(false) }
+
+    // Load profile data when composable is first launched
+    LaunchedEffect(memberId) {
+        viewModel.loadProfile(memberId)
+    }
 
     Column(
         modifier = modifier
@@ -47,7 +64,11 @@ fun ProfileScreen(
     ) {
         // Header
         ProfileHeader(
-            onEditClick = { showEditProfileDialog = true }
+            isOwnProfile = isOwnProfile,
+            showBackButton = showBackButton,
+            onBackClick = onBackClick,
+            onEditClick = { showEditProfileDialog = true },
+            profileData = profileData
         )
 
         // Content
@@ -64,12 +85,15 @@ fun ProfileScreen(
                 ProductListSection()
             }
 
-            item {
-                SettingsSection(
-                    onLogoutClick = { showLogoutDialog = true },
-                    onDeleteAccountClick = { showDeleteAccountDialog = true },
-                    onSettingsClick = onSettingsClick
-                )
+            // Settings section only for own profile
+            if (isOwnProfile) {
+                item {
+                    SettingsSection(
+                        onLogoutClick = { showLogoutDialog = true },
+                        onDeleteAccountClick = { showDeleteAccountDialog = true },
+                        onSettingsClick = onSettingsClick
+                    )
+                }
             }
         }
     }
@@ -107,22 +131,56 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileHeader(
-    onEditClick: () -> Unit
+fun ProfileHeader(
+    isOwnProfile: Boolean = true,
+    showBackButton: Boolean = false,
+    onBackClick: () -> Unit = {},
+    onEditClick: () -> Unit,
+    profileData: com.nobody.campick.models.ProfileData? = null
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = AppColors.brandWhite10
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+    Column {
+        // Top Bar with Back Button
+        if (showBackButton) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "뒤로가기",
+                        tint = AppColors.primaryText
+                    )
+                }
+
+                Text(
+                    text = if (isOwnProfile) "내 프로필" else "프로필",
+                    style = TextStyle(
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppColors.primaryText
+                    ),
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+        }
+
+        // Profile Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = AppColors.brandWhite10
+            )
         ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             // Profile Image
             Box {
                 AsyncImage(
@@ -136,20 +194,22 @@ private fun ProfileHeader(
                     placeholder = painterResource(R.drawable.ic_person)
                 )
 
-                // Edit Button
-                FloatingActionButton(
-                    onClick = onEditClick,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .align(Alignment.BottomEnd),
-                    containerColor = AppColors.brandOrange,
-                    contentColor = AppColors.primaryText
-                ) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "편집",
-                        modifier = Modifier.size(16.dp)
-                    )
+                // Edit Button (only for own profile)
+                if (isOwnProfile) {
+                    FloatingActionButton(
+                        onClick = onEditClick,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .align(Alignment.BottomEnd),
+                        containerColor = AppColors.brandOrange,
+                        contentColor = AppColors.primaryText
+                    ) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "편집",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
 
@@ -157,7 +217,7 @@ private fun ProfileHeader(
 
             // Name
             Text(
-                text = "사용자 이름", // TODO: Get from ViewModel
+                text = profileData?.nickname ?: "사용자 이름",
                 style = TextStyle.titleFont(20),
                 color = AppColors.primaryText
             )
@@ -166,16 +226,17 @@ private fun ProfileHeader(
 
             // Description
             Text(
-                text = "자기소개를 입력하세요", // TODO: Get from ViewModel
+                text = profileData?.description ?: "자기소개를 입력하세요",
                 style = TextStyle.bodyFont(14),
                 color = AppColors.brandWhite70
             )
+            }
         }
     }
 }
 
 @Composable
-private fun ProfileStatsSection() {
+fun ProfileStatsSection() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -210,7 +271,7 @@ private fun ProfileStatsSection() {
 }
 
 @Composable
-private fun StatItem(
+fun StatItem(
     title: String,
     count: String,
     modifier: Modifier = Modifier
@@ -237,7 +298,7 @@ private fun StatItem(
 }
 
 @Composable
-private fun ProductListSection() {
+fun ProductListSection() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -282,7 +343,7 @@ private fun ProductListSection() {
 }
 
 @Composable
-private fun SettingsSection(
+fun SettingsSection(
     onLogoutClick: () -> Unit,
     onDeleteAccountClick: () -> Unit,
     onSettingsClick: () -> Unit
@@ -329,7 +390,7 @@ private fun SettingsSection(
 }
 
 @Composable
-private fun SettingsItem(
+fun SettingsItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     onClick: () -> Unit,
@@ -365,7 +426,7 @@ private fun SettingsItem(
 
 // Dialog Composables (simplified versions)
 @Composable
-private fun LogoutConfirmationDialog(
+fun LogoutConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -398,7 +459,7 @@ private fun LogoutConfirmationDialog(
 }
 
 @Composable
-private fun AccountDeletionDialog(
+fun AccountDeletionDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -431,7 +492,7 @@ private fun AccountDeletionDialog(
 }
 
 @Composable
-private fun ProfileEditDialog(
+fun ProfileEditDialog(
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {

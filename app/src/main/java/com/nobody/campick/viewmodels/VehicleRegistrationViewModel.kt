@@ -237,17 +237,45 @@ class VehicleRegistrationViewModel : ViewModel() {
         }
 
         _errors.value = newErrors
-
-        if (newErrors.isEmpty()) {
-            submitVehicleRegistration()
-        }
     }
 
-    private fun submitVehicleRegistration() {
+    /**
+     * 폼 유효성 검사 통과 여부
+     */
+    fun isValidForSubmission(): Boolean {
+        return _errors.value.isEmpty()
+    }
+
+    /**
+     * 메인 이미지 추가 (4:3 비율로 크롭된 이미지)
+     */
+    fun addMainImageFromUri(imageUri: Uri) {
+        // 기존 메인 이미지들을 모두 일반 이미지로 변경
+        val updatedExistingImages = _vehicleImages.value.map { it.copy(isMain = false) }
+
+        // 새 메인 이미지를 맨 앞에 추가
+        val newMainImage = VehicleImage(
+            imageUri = imageUri,
+            isMain = true
+        )
+        _vehicleImages.value = listOf(newMainImage) + updatedExistingImages
+        clearError("images")
+    }
+
+    fun submitVehicleRegistration(context: android.content.Context) {
         _isSubmitting.value = true
 
         viewModelScope.launch {
             try {
+                // 1. 먼저 이미지 업로드
+                if (_vehicleImages.value.isNotEmpty()) {
+                    if (!uploadImages(context)) {
+                        // 이미지 업로드 실패시 처리 중단
+                        return@launch
+                    }
+                }
+
+                // 2. 매물 정보 등록
                 val mainImageUrl = _uploadedImageUrls.value.firstOrNull() ?: ""
                 val productImageUrls = _uploadedImageUrls.value.drop(1)
 
@@ -269,7 +297,6 @@ class VehicleRegistrationViewModel : ViewModel() {
                     mainProductImageUrl = mainImageUrl
                 )
 
-                // TODO: Implement API call
                 submitToAPI(request)
 
             } catch (e: Exception) {
@@ -281,22 +308,112 @@ class VehicleRegistrationViewModel : ViewModel() {
     }
 
     private suspend fun submitToAPI(request: VehicleRegistrationRequest) {
-        // TODO: Implement actual API call
-        // This would typically use a repository pattern
         try {
-            // Simulate API call
-            kotlinx.coroutines.delay(2000)
-
-            // Simulate success response
-            _alertMessage.value = "매물이 성공적으로 등록되었습니다."
-            _showSuccessAlert.value = true
-            _isSubmitting.value = false
+            when (val result = com.nobody.campick.services.VehicleService.registerVehicle(request)) {
+                is com.nobody.campick.services.network.ApiResult.Success -> {
+                    _alertMessage.value = "매물이 성공적으로 등록되었습니다."
+                    _showSuccessAlert.value = true
+                    resetForm()
+                }
+                is com.nobody.campick.services.network.ApiResult.Error -> {
+                    _alertMessage.value = "매물 등록에 실패했습니다: ${result.message}"
+                    _showErrorAlert.value = true
+                }
+            }
 
         } catch (e: Exception) {
             _alertMessage.value = "네트워크 오류가 발생했습니다: ${e.localizedMessage}"
             _showErrorAlert.value = true
+        } finally {
             _isSubmitting.value = false
         }
+    }
+
+    /**
+     * 이미지 업로드 처리 (Swift와 동일한 압축 로직 적용)
+     */
+    suspend fun uploadImages(context: android.content.Context): Boolean {
+        val vehicleImages = _vehicleImages.value
+        val uploadedUrls = mutableListOf<String>()
+
+        try {
+            for (vehicleImage in vehicleImages) {
+                // 1. Uri에서 Bitmap 로드
+                val bitmap = com.nobody.campick.utils.ImageUtils.loadCompressedBitmapFromUri(
+                    context, vehicleImage.imageUri
+                ) ?: continue
+
+                // 2. 메인 이미지인 경우 4:3 비율로 크롭 처리
+                val processedBitmap = if (vehicleImage.isMain) {
+                    com.nobody.campick.utils.ImageUtils.processMainImage(bitmap)
+                } else {
+                    bitmap
+                }
+
+                // 3. Swift와 동일한 압축 로직 적용 (1MB 이하)
+                val compressedImageData = com.nobody.campick.utils.ImageUtils.compressImage(
+                    processedBitmap, maxSizeInMB = 1.0
+                ) ?: continue
+
+                // 4. API 업로드
+                when (val result = com.nobody.campick.services.VehicleService.uploadImage(compressedImageData)) {
+                    is com.nobody.campick.services.network.ApiResult.Success -> {
+                        uploadedUrls.add(result.data)
+
+                        // 압축된 이미지 크기 로그
+                        val sizeString = com.nobody.campick.utils.ImageUtils.getImageSizeString(compressedImageData)
+                        println("✅ 이미지 업로드 성공: ${vehicleImage.isMain}메인 여부, 크기: $sizeString")
+                    }
+                    is com.nobody.campick.services.network.ApiResult.Error -> {
+                        _alertMessage.value = "이미지 업로드에 실패했습니다: ${result.message}"
+                        _showErrorAlert.value = true
+
+                        // 메모리 정리
+                        if (processedBitmap != bitmap) {
+                            processedBitmap.recycle()
+                        }
+                        if (bitmap != null) {
+                            bitmap.recycle()
+                        }
+
+                        return false
+                    }
+                }
+
+                // 메모리 정리
+                if (processedBitmap != bitmap) {
+                    processedBitmap.recycle()
+                }
+                bitmap.recycle()
+            }
+
+            _uploadedImageUrls.value = uploadedUrls
+            return true
+
+        } catch (e: Exception) {
+            _alertMessage.value = "이미지 업로드 중 오류가 발생했습니다: ${e.localizedMessage}"
+            _showErrorAlert.value = true
+            return false
+        }
+    }
+
+    /**
+     * 폼 초기화
+     */
+    private fun resetForm() {
+        _vehicleImages.value = emptyList()
+        _uploadedImageUrls.value = emptyList()
+        _title.value = ""
+        _mileage.value = ""
+        _vehicleType.value = ""
+        _price.value = ""
+        _description.value = ""
+        _generation.value = ""
+        _vehicleModel.value = ""
+        _location.value = ""
+        _plateHash.value = ""
+        _vehicleOptions.value = _vehicleOptions.value.map { it.copy(isInclude = false) }
+        _errors.value = emptyMap()
     }
 
     private fun loadProductInfo() {
@@ -304,39 +421,40 @@ class VehicleRegistrationViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // TODO: Implement actual API call
-                // Simulate API call
-                kotlinx.coroutines.delay(1000)
+                when (val result = com.nobody.campick.services.VehicleService.fetchProductInfo()) {
+                    is com.nobody.campick.services.network.ApiResult.Success -> {
+                        val response = result.data
+                        _availableTypes.value = response.type
+                        _availableModels.value = response.model
+                        _availableOptions.value = response.option
 
-                // Simulate response
-                val mockResponse = ProductInfoResponse(
-                    type = listOf("모터홈", "픽업트럭", "SUV"),
-                    model = listOf("현대 포레스트", "기아 쏘렌토", "Toyota Hilux"),
-                    option = listOf("샤워실", "화장실", "침대", "주방", "에어컨")
-                )
-
-                _availableTypes.value = mockResponse.type
-                _availableModels.value = mockResponse.model
-                _availableOptions.value = mockResponse.option
-
-                _vehicleOptions.value = mockResponse.option.map { optionName ->
-                    VehicleOption(optionName = optionName, isInclude = false)
+                        _vehicleOptions.value = response.option.map { optionName ->
+                            VehicleOption(optionName = optionName, isInclude = false)
+                        }
+                    }
+                    is com.nobody.campick.services.network.ApiResult.Error -> {
+                        // API 실패시 기본값 사용
+                        useDefaultValues()
+                    }
                 }
 
                 _isLoadingProductInfo.value = false
 
             } catch (e: Exception) {
-                // Use default values on failure
-                _availableTypes.value = listOf("모터홈", "픽업트럭", "SUV")
-                _availableModels.value = listOf("현대 포레스트", "기아 쏘렌토", "Toyota Hilux")
-                _availableOptions.value = listOf("샤워실", "화장실", "침대", "주방", "에어컨")
-
-                _vehicleOptions.value = _availableOptions.value.map { optionName ->
-                    VehicleOption(optionName = optionName, isInclude = false)
-                }
-
+                // 예외 발생시 기본값 사용
+                useDefaultValues()
                 _isLoadingProductInfo.value = false
             }
+        }
+    }
+
+    private fun useDefaultValues() {
+        _availableTypes.value = listOf("모터홈", "픽업트럭", "SUV", "캠핑밴")
+        _availableModels.value = listOf("현대 포레스트", "기아 쏘렌토", "Toyota Hilux", "기아 봉고")
+        _availableOptions.value = listOf("샤워실", "화장실", "침대", "주방", "에어컨", "난방", "냉장고", "전자레인지", "태양광패널")
+
+        _vehicleOptions.value = _availableOptions.value.map { optionName ->
+            VehicleOption(optionName = optionName, isInclude = false)
         }
     }
 
