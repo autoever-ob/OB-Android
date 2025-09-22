@@ -29,8 +29,7 @@ class HomeFragment : Fragment() {
                 val viewModel = LoginViewModel()
 
                 CampickTheme {
-//                    Home()
-                    Login(navController, viewModel)
+                    Home()
                 }
             }
         }
