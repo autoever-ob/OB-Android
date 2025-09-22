@@ -15,7 +15,8 @@ import com.nobody.campick.components.home.ProfileMenu
 import com.nobody.campick.components.home.RecommendVehicle
 import com.nobody.campick.components.home.TopBanner
 import com.nobody.campick.components.home.VehicleCategory
-import com.nobody.campick.components.home.VehicleModel
+import com.nobody.campick.models.home.RecommendedVehicle
+import com.nobody.campick.models.home.RecommendedVehicleStatus
 
 @Composable
 fun Home() {
@@ -23,9 +24,45 @@ fun Home() {
     // 뷰모델 (웹소켓 연결용)
 //    val viewModel = remember { HomeChatViewModel() }
     val vehicles = listOf(
-        VehicleModel(1, "현대 모터홈", "2020", "20,000km", "₩45,000,000", "", false, 12),
-        VehicleModel(2, "벤츠 스프린터", "2021", "15,000km", "₩80,000,000", "", true, 34),
-        VehicleModel(3, "트레일러 캠핑카", "2019", "30,000km", "₩25,000,000", "", false, 7)
+        RecommendedVehicle(
+            productId = 1,
+            title = "현대 모터홈",
+            price = "₩45,000,000",
+            generation = 2025,
+            mileage = "20,000km",
+            location = "서울",
+            createdAt = "2025-09-20T14:43:21",
+            thumbNail = "",
+            status = RecommendedVehicleStatus.AVAILABLE,
+            isLiked = false,
+            likeCount = 12
+        ),
+        RecommendedVehicle(
+            productId = 2,
+            title = "벤츠 스프린터",
+            price = "₩80,000,000",
+            mileage = "15,000km",
+            generation = 2025,
+            location = "부산",
+            createdAt = "2025-09-21T09:15:00",
+            thumbNail = "",
+            status = RecommendedVehicleStatus.AVAILABLE,
+            isLiked = true,
+            likeCount = 34
+        ),
+        RecommendedVehicle(
+            productId = 3,
+            title = "트레일러 캠핑카",
+            price = "₩25,000,000",
+            mileage = "30,000km",
+            generation = 2025,
+            location = "대전",
+            createdAt = "2025-09-19T19:00:00",
+            thumbNail = "",
+            status = RecommendedVehicleStatus.SOLD,
+            isLiked = false,
+            likeCount = 7
+        )
     )
 
     Box(
@@ -53,7 +90,7 @@ fun Home() {
                 TopBanner()
                 FindVehicle()
                 VehicleCategory()
-                RecommendVehicle(vehicles, onAllClick = {}, onLikeClick = {})
+                RecommendVehicle()
                 BottomBanner(
                     onDetailClick = { /* TODO: 네비게이션 처리 */ }
                 )

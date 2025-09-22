@@ -1,5 +1,6 @@
 package com.nobody.campick.services
 
+import com.nobody.campick.models.home.RecommendedVehicle
 import com.nobody.campick.services.network.*
 
 object ProductApi {
@@ -75,11 +76,14 @@ object ProductApi {
     /**
      * 추천 상품 조회
      */
-    suspend fun getRecommendedProducts(): ApiResult<List<ProductItemDTO>> {
-        return APIService.get<ApiResponse<List<ProductItemDTO>>>(
+    suspend fun getRecommendedVehicles(): ApiResult<List<RecommendedVehicle>> {
+        return APIService.get<RecommendResponse>(
             endpoint = Endpoint.CarRecommend
         ).map { response ->
-            response.data ?: emptyList()
+            listOf(
+                response.data.newVehicle,
+                response.data.hotVehicle
+            )
         }
     }
 }

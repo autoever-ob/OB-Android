@@ -14,6 +14,7 @@ data class RecommendedVehicle(
     val productId: Int,
     val title: String,
     val price: String,
+    val generation: Int,
     val mileage: String,
     val location: String,
     val createdAt: String,
