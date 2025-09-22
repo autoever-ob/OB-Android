@@ -1,38 +1,37 @@
 package com.nobody.campick.fragments
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.navigation.compose.rememberNavController
+import com.nobody.campick.activities.VehicleDetailActivity
 import com.nobody.campick.databinding.FragmentHomeBinding
+import com.nobody.campick.ui.theme.CampickTheme
+import com.nobody.campick.viewmodels.LoginViewModel
+import com.nobody.campick.views.FavoritesView
+import com.nobody.campick.views.Home
+import com.nobody.campick.views.Login
 
 class HomeFragment : Fragment() {
-
-    private var _binding: FragmentHomeBinding? = null
-    private val binding get() = _binding!!
-
+    @SuppressLint("ViewModelConstructorInComposable")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+        return ComposeView(requireContext()).apply {
+            setContent {
+                val navController = rememberNavController()
+                val viewModel = LoginViewModel()
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupUI()
-    }
-
-    private fun setupUI() {
-        // TODO: HomeView 구현
-        binding.textView.text = "홈 화면"
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+                CampickTheme {
+                    Home()
+                }
+            }
+        }
     }
 }

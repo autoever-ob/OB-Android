@@ -20,6 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CampickTheme {
                 Scaffold { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
 //                    val mockChats = listOf(
 //                        ChatListModel(
 //                            id = 1,
@@ -66,24 +67,25 @@ class MainActivity : ComponentActivity() {
 //                        },
 //                    )
 
-                    ChatRoom(
-                        seller = ChatSeller(
-                            id = "1",
-                            name = "티파니 갱",
-                            avatar = "https://example.com/avatar1.png",
-                            isOnline = true,
-                            lastSeen = null,
-                            phoneNumber = "010-1234-5678"
-                        ),
-                        vehicle = ChatVehicle(
-                            id = "101",
-                            title = "현대 포레스트 프리미엄",
-                            price = 50000000,
-                            status = "판매중",
-                            image = "https://example.com/vehicle1.png"
-                        ),
-                        onBack = { finish() } // MainActivity에서라면 액티비티 종료
-                    )
+                        ChatRoom(
+                            seller = ChatSeller(
+                                id = "1",
+                                name = "티파니 갱",
+                                avatar = "https://example.com/avatar1.png",
+                                isOnline = true,
+                                lastSeen = null,
+                                phoneNumber = "010-1234-5678"
+                            ),
+                            vehicle = ChatVehicle(
+                                id = "101",
+                                title = "현대 포레스트 프리미엄",
+                                price = 50000000,
+                                status = "판매중",
+                                image = "https://example.com/vehicle1.png"
+                            ),
+                            onBack = { finish() } // MainActivity에서라면 액티비티 종료
+                        )
+                    }
                 }
             }
         }
