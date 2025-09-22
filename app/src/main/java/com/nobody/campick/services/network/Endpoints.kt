@@ -20,6 +20,7 @@ sealed class Endpoint(val path: String) {
     object CarRecommend : Endpoint("/api/product/recommend")
     object Products : Endpoint("/api/product")
     object ProductInfo : Endpoint("/api/product/info")
+    data class ProductDetail(val productId: String) : Endpoint("/api/product/$productId")
 
     // 채팅 관련
     object ChatList : Endpoint("/api/chat/my")
@@ -28,6 +29,7 @@ sealed class Endpoint(val path: String) {
     data class MemberInfo(val memberId: String) : Endpoint("/api/member/info/$memberId")
     data class MemberProducts(val memberId: String) : Endpoint("/api/member/product/all/$memberId")
     data class MemberSoldProducts(val memberId: String) : Endpoint("/api/member/sold/$memberId")
+    data class MemberMyProductList(val memberId: String) : Endpoint("/api/member/product/sold/$memberId")
     object MemberSignout : Endpoint("/api/member/signout")
     object MemberNickname : Endpoint("/api/member/nickname")
     object MemberImage : Endpoint("/api/member/image")
@@ -69,8 +71,8 @@ sealed class Endpoint(val path: String) {
 
             is MemberNickname, is MemberImage, is ChangePassword -> Method.PUT
 
-            is CarRecommend, is ChatList, is Products, is ProductInfo,
-            is MemberInfo, is MemberProducts, is MemberSoldProducts -> Method.GET
+            is CarRecommend, is ChatList, is Products, is ProductInfo, is ProductDetail,
+            is MemberInfo, is MemberProducts, is MemberSoldProducts, is MemberMyProductList -> Method.GET
         }
 
     /**

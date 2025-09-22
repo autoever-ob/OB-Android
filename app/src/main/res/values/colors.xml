@@ -7,4 +7,40 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Brand Colors -->
+    <color name="brand_orange">#F97316</color>
+    <color name="brand_light_orange">#FB923C</color>
+    <color name="brand_light_green">#22C55E</color>
+    <color name="brand_background">#0B211A</color>
+    <color name="primary_text">#FFFFFF</color>
+
+    <!-- Brand White with opacity -->
+    <color name="brand_white_70">#B3FFFFFF</color>
+    <color name="brand_white_80">#CCFFFFFF</color>
+    <color name="brand_white_90">#E6FFFFFF</color>
+    <color name="brand_white_60">#99FFFFFF</color>
+    <color name="brand_white_50">#80FFFFFF</color>
+    <color name="brand_white_40">#66FFFFFF</color>
+    <color name="brand_white_20">#33FFFFFF</color>
+    <color name="brand_white_10">#1AFFFFFF</color>
+    <color name="brand_white_05">#0DFFFFFF</color>
+
+    <!-- Additional colors -->
+    <color name="brand_red">#FF5722</color>
+    <color name="gray_30">#4D808080</color>
+    <color name="brand_orange_80">#CCF97316</color>
+    <color name="brand_orange_20">#33F97316</color>
+    <color name="brand_light_green_20">#3322C55E</color>
+    <color name="red_80">#CCFF5722</color>
+    <color name="tab_divider">#4D9E9E9E</color>
+    <color name="input_border">#33FFFFFF</color>
+    <color name="input_border_error">#FFFF0000</color>
+    <color name="field_label">#CCFFFFFF</color>
+    <color name="error_text">#FFFF6B6B</color>
+
+    <!-- Additional required colors -->
+    <color name="background_dark">#0B211A</color>
+    <color name="red">#FF5722</color>
+    <color name="brand_white">#FFFFFF</color>
 </resources>

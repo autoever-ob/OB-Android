@@ -2,7 +2,7 @@ package com.nobody.campick.services
 
 import com.nobody.campick.models.Page
 import com.nobody.campick.models.Product
-import com.nobody.campick.models.ProfileResponse
+import com.nobody.campick.models.ProfileData
 import com.nobody.campick.services.network.APIService
 import com.nobody.campick.services.network.ApiResult
 import com.nobody.campick.services.network.Endpoint
@@ -12,8 +12,8 @@ object ProfileService {
     /**
      * 회원 정보 조회
      */
-    suspend fun fetchMemberInfo(memberId: String): ApiResult<ProfileResponse> {
-        return APIService.get<ProfileResponse>(
+    suspend fun fetchMemberInfo(memberId: String): ApiResult<ProfileData> {
+        return APIService.get<ProfileData>(
             endpoint = Endpoint.MemberInfo(memberId)
         )
     }
