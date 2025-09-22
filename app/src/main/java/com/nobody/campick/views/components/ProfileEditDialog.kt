@@ -49,6 +49,15 @@ class ProfileEditDialog(
         window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         window?.setDimAmount(0.6f)
 
+        // 다이얼로그 윈도우 크기 설정 - 화면 너비의 90% 사용
+        window?.attributes?.let { attributes ->
+            val displayMetrics = context.resources.displayMetrics
+            val screenWidth = displayMetrics.widthPixels
+            attributes.width = (screenWidth * 0.9).toInt() // 화면 너비의 90%
+            attributes.height = android.view.WindowManager.LayoutParams.WRAP_CONTENT
+            window?.attributes = attributes
+        }
+
         setupViews()
         loadProfileData()
         animateShow()

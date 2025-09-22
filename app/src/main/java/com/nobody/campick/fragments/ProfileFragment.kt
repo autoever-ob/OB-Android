@@ -85,11 +85,7 @@ class ProfileFragment : Fragment() {
             type = CommonHeader.HeaderType.Navigation(
                 title = "내 프로필",
                 showBackButton = !isOwnProfile, // 자신의 프로필이 아닐 때만 뒤로가기 버튼 표시
-                showRightButton = isOwnProfile, // 자신의 프로필일 때만 설정 버튼 표시
-                rightButtonIcon = if (isOwnProfile) R.drawable.ic_lock else null,
-                rightButtonAction = if (isOwnProfile) {
-                    { showPasswordChangeDialog() }
-                } else null
+                showRightButton = false
             ),
             onBackClick = {
                 requireActivity().supportFragmentManager.popBackStack()
@@ -133,9 +129,6 @@ class ProfileFragment : Fragment() {
         val settingLogout = view?.findViewById<View>(R.id.settingLogout)
         val settingDeleteAccount = view?.findViewById<View>(R.id.settingDeleteAccount)
 
-        settingChangePassword?.setOnClickListener {
-            showPasswordChangeDialog()
-        }
 
         settingLogout?.setOnClickListener {
             showLogoutConfirmDialog()
@@ -149,7 +142,7 @@ class ProfileFragment : Fragment() {
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             // 프로필 정보 관찰
-            viewModel.profileResponse.collect { profile ->
+            viewModel.profileData.collect { profile ->
                 profile?.let {
                     updateProfileHeader(it)
                 }
@@ -324,7 +317,7 @@ class ProfileFragment : Fragment() {
     }
 
     private fun showEditProfileDialog() {
-        viewModel.profileResponse.value?.let { profile ->
+        viewModel.profileData.value?.let { profile ->
             val editDialog = ProfileEditDialog(
                 context = requireContext(),
                 profile = profile,
@@ -350,24 +343,6 @@ class ProfileFragment : Fragment() {
         Toast.makeText(requireContext(), "채팅 시작: $userId", Toast.LENGTH_SHORT).show()
     }
 
-    private fun showPasswordChangeDialog() {
-        val passwordChangeDialog = CustomConfirmationDialog(
-            context = requireContext(),
-            title = "비밀번호 변경",
-            message = "비밀번호를 변경하시겠습니까?",
-            confirmButtonText = "변경하기",
-            cancelButtonText = "취소",
-            isDestructive = false,
-            onConfirm = {
-                // TODO: 비밀번호 변경 화면으로 이동
-                Toast.makeText(requireContext(), "비밀번호 변경", Toast.LENGTH_SHORT).show()
-            },
-            onCancel = {
-                // 취소시 특별한 처리가 필요하지 않음
-            }
-        )
-        passwordChangeDialog.show()
-    }
 
     private fun showLogoutConfirmDialog() {
         val logoutDialog = LogoutDialog(

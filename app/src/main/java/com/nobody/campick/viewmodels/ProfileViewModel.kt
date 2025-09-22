@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nobody.campick.models.Page
 import com.nobody.campick.models.Product
-import com.nobody.campick.models.ProfileResponse
+import com.nobody.campick.models.ProfileData
 import com.nobody.campick.services.ProfileService
 import com.nobody.campick.services.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel : ViewModel() {
 
-    private val _profileResponse = MutableStateFlow<ProfileResponse?>(null)
-    val profileResponse: StateFlow<ProfileResponse?> = _profileResponse.asStateFlow()
+    private val _profileData = MutableStateFlow<ProfileData?>(null)
+    val profileData: StateFlow<ProfileData?> = _profileData.asStateFlow()
 
     private val _sellingProducts = MutableStateFlow<List<Product>>(emptyList())
     val sellingProducts: StateFlow<List<Product>> = _sellingProducts.asStateFlow()
@@ -73,7 +73,7 @@ class ProfileViewModel : ViewModel() {
             // 프로필 정보 조회
             when (val profileResult = ProfileService.fetchMemberInfo(targetMemberId)) {
                 is ApiResult.Success -> {
-                    _profileResponse.value = profileResult.data
+                    _profileData.value = profileResult.data
                 }
                 is ApiResult.Error -> {
                     if (isAuthError(profileResult.message)) {
