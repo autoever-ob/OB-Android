@@ -109,6 +109,31 @@ object APIService {
             ApiResult.Error(e.message ?: "Unknown error occurred")
         }
     }
+    /**
+    * PATCH 요청
+    */
+    suspend inline fun <reified T> patch(
+        endpoint: Endpoint,
+        body: Any? = null
+    ): ApiResult<T> = withContext(Dispatchers.IO) {
+        try {
+            val requestBody = body?.let {
+                val jsonString = json.encodeToString(it)
+                jsonString.toRequestBody("application/json".toMediaType())
+            } ?: "".toRequestBody("application/json".toMediaType())
+
+            val request = Request.Builder()
+                .url(endpoint.url)
+                .patch(requestBody)
+                .build()
+
+            executeRequest<T>(request)
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Unknown error occurred")
+        }
+    }
+
+
 
     /**
      * DELETE 요청

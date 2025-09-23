@@ -74,6 +74,7 @@ class VehicleDetailViewModel : ViewModel() {
                     likeCount = newLikeCount
                 )
 
+
                 // API 호출
                 when (val result = VehicleService.toggleLike(currentDetail.id)) {
                     is ApiResult.Success -> {

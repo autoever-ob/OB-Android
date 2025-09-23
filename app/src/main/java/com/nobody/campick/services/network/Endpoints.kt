@@ -74,6 +74,8 @@ sealed class Endpoint(val path: String) {
 
             is CarRecommend, is ChatList, is Products, is ProductInfo, is ProductDetail,
             is MemberInfo, is MemberProducts, is MemberSoldProducts, is MemberMyProductList -> Method.GET
+
+            is ProductLike -> Method.PATCH
         }
 
     /**
