@@ -27,7 +27,8 @@ data class VehicleDetailViewData(
     val features: List<String>,
     val seller: Seller,
     val isLiked: Boolean,
-    val likeCount: Int
+    val likeCount: Int,
+    val status: VehicleStatus = VehicleStatus.ACTIVE
 ) {
     companion object {
         fun createMockData(vehicleId: String): VehicleDetailViewData {

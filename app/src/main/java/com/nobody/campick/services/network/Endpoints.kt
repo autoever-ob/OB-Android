@@ -20,8 +20,12 @@ sealed class Endpoint(val path: String) {
     object CarRecommend : Endpoint("/api/product/recommend")
     object Products : Endpoint("/api/product")
     object ProductInfo : Endpoint("/api/product/info")
+    object ProductStatus : Endpoint("/api/product/status")
     data class ProductDetail(val productId: String) : Endpoint("/api/product/$productId")
     data class ProductLike(val productId: String) : Endpoint("/api/product/$productId/like")
+
+    // 찜하기 관련 (iOS와 동일)
+    data class Favorites(val memberId: String) : Endpoint("/api/member/favorite/$memberId")
 
     // 채팅 관련
     object ChatList : Endpoint("/api/chat/my")
@@ -29,12 +33,22 @@ sealed class Endpoint(val path: String) {
     // 멤버 관련
     data class MemberInfo(val memberId: String) : Endpoint("/api/member/info/$memberId")
     data class MemberProducts(val memberId: String) : Endpoint("/api/member/product/all/$memberId")
-    data class MemberSoldProducts(val memberId: String) : Endpoint("/api/member/sold/$memberId")
+    data class MemberSoldProducts(val memberId: String) : Endpoint("/api/member/product/sold/$memberId/modify")
     data class MemberMyProductList(val memberId: String) : Endpoint("/api/member/product/sold/$memberId")
-    object MemberSignout : Endpoint("/api/member/signout")
+    data class MemberSellOrReserveProducts(val memberId: String) : Endpoint("/api/member/product/sell-or-reserve/$memberId")
+    object MemberDelete : Endpoint("/api/member") // iOS와 동일 (DELETE /api/member)
     object MemberNickname : Endpoint("/api/member/nickname")
+    object MemberUpdate : Endpoint("/api/member/update")
     object MemberImage : Endpoint("/api/member/image")
     object ChangePassword : Endpoint("/api/member/password")
+
+    // 카운트 관련
+    data class CountProductSold(val memberId: String) : Endpoint("/api/count/product/sold/$memberId")
+    data class CountProductSellOrReserve(val memberId: String) : Endpoint("/api/count/product/sell-or-reserve/$memberId")
+    data class CountProductAll(val memberId: String) : Endpoint("/api/count/product/all/$memberId")
+
+    // 카테고리 관련
+    data class CategoryType(val typeName: String) : Endpoint("/api/category/type/$typeName")
 
     companion object {
         const val BASE_URL = "https://campick.shop"
@@ -66,13 +80,18 @@ sealed class Endpoint(val path: String) {
     val defaultMethod: Method
         get() = when (this) {
             is Login, is Signup, is EmailSend, is EmailVerify,
-            is UploadImage, is RegisterProduct, is TokenReissue -> Method.POST
+            is UploadImage, is RegisterProduct, is TokenReissue, is Logout -> Method.POST
 
-            is Logout, is MemberSignout -> Method.DELETE
+            is MemberDelete -> Method.DELETE
 
             is MemberNickname, is MemberImage, is ChangePassword -> Method.PUT
 
+            is MemberUpdate, is ProductLike, is ProductStatus -> Method.PATCH
+
             is CarRecommend, is ChatList, is Products, is ProductInfo, is ProductDetail,
+            is MemberInfo, is MemberProducts, is MemberSoldProducts, is MemberMyProductList,
+            is MemberSellOrReserveProducts, is CountProductSold, is CountProductSellOrReserve,
+            is CountProductAll, is Favorites, is CategoryType -> Method.GET
             is MemberInfo, is MemberProducts, is MemberSoldProducts, is MemberMyProductList -> Method.GET
 
             is ProductLike -> Method.PATCH

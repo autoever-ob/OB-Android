@@ -13,6 +13,12 @@ object AppColors {
     /** 기본 텍스트 */
     val primaryText = Color.White
 
+    /** 보조 텍스트 */
+    val secondaryText = Color.White.copy(alpha = 0.6f)
+
+    /** 카드 배경 */
+    val cardBackground = Color(0xFF1A2F26)
+
     /** 브랜드 오렌지 */
     val brandOrange = Color(0xFFF97316)
 

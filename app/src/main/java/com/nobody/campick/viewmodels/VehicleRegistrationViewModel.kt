@@ -80,10 +80,79 @@ class VehicleRegistrationViewModel : ViewModel() {
     private val _alertMessage = MutableStateFlow("")
     val alertMessage: StateFlow<String> = _alertMessage.asStateFlow()
 
+    private val _editingProductId = MutableStateFlow<String?>(null)
+    val editingProductId: StateFlow<String?> = _editingProductId.asStateFlow()
+
+    private val _isLoadingForEdit = MutableStateFlow(false)
+    val isLoadingForEdit: StateFlow<Boolean> = _isLoadingForEdit.asStateFlow()
+
     private val koreanPlateRegex = Pattern.compile("^\\d{2,3}[가-힣]\\d{4}$")
 
     init {
         loadProductInfo()
+    }
+
+    fun loadProductForEdit(productId: String) {
+        viewModelScope.launch {
+            _isLoadingForEdit.value = true
+            _editingProductId.value = productId
+
+            try {
+                val result = com.nobody.campick.services.VehicleService.fetchProductDetail(productId)
+                println("📡 API 응답 결과: $result")
+                when (result) {
+                    is com.nobody.campick.services.network.ApiResult.Success -> {
+                        val detail = result.data
+                        println("📦 받은 데이터: title=${detail.title}, type=${detail.vehicleType}, model=${detail.vehicleModel}")
+
+                        // 폼 필드 채우기
+                        _title.value = detail.title
+                        _vehicleType.value = detail.vehicleType
+                        _vehicleModel.value = detail.vehicleModel
+                        _generation.value = detail.generation?.toString() ?: ""
+                        _mileage.value = detail.mileage
+                        _location.value = detail.location
+                        _plateHash.value = detail.plateHash
+                        _price.value = detail.price
+                        _description.value = detail.description
+
+                        println("✏️ StateFlow 업데이트: title=${_title.value}, type=${_vehicleType.value}")
+
+                        // 옵션 설정 (ProductOptionDTO를 VehicleOption으로 변환)
+                        _vehicleOptions.value = detail.option.map { optionDto ->
+                            VehicleOption(
+                                optionName = optionDto.optionName,
+                                isInclude = optionDto.isInclude
+                            )
+                        }
+
+                        // 이미지 설정 (URL을 VehicleImage로 변환)
+                        val images = detail.productImageUrl.mapIndexed { index, url ->
+                            VehicleImage(
+                                id = "uploaded_$index",
+                                imageUri = android.net.Uri.parse(url),
+                                uploadedUrl = url,
+                                isMain = index == 0
+                            )
+                        }
+                        _vehicleImages.value = images
+                        _uploadedImageUrls.value = detail.productImageUrl
+
+                        println("✅ 수정 데이터 로드 완료: ${detail.title}, images=${images.size}")
+                    }
+                    is com.nobody.campick.services.network.ApiResult.Error -> {
+                        println("❌ API 에러: ${result.message}")
+                        _alertMessage.value = "수정할 매물 정보를 불러오지 못했습니다: ${result.message}"
+                        _showErrorAlert.value = true
+                    }
+                }
+            } catch (e: Exception) {
+                _alertMessage.value = "수정할 매물 정보를 불러오는 중 오류가 발생했습니다."
+                _showErrorAlert.value = true
+            } finally {
+                _isLoadingForEdit.value = false
+            }
+        }
     }
 
     fun updateTitle(value: String) {
@@ -121,6 +190,7 @@ class VehicleRegistrationViewModel : ViewModel() {
         clearError("vehicleModel")
     }
 
+
     fun updateLocation(value: String) {
         _location.value = value
         clearError("location")
@@ -144,6 +214,21 @@ class VehicleRegistrationViewModel : ViewModel() {
         clearError("images")
     }
 
+    fun addVehicleImageAndUpload(imageUri: Uri, context: android.content.Context) {
+        println("🔄 이미지 추가 및 업로드 시작: $imageUri")
+        val newImage = VehicleImage(
+            imageUri = imageUri,
+            isMain = _vehicleImages.value.isEmpty()
+        )
+        _vehicleImages.value = _vehicleImages.value + newImage
+        clearError("images")
+
+        // 즉시 업로드
+        viewModelScope.launch {
+            uploadSingleImage(newImage, context)
+        }
+    }
+
     fun addVehicleImageAsMain(imageUri: Uri) {
         // 기존 메인 이미지들을 모두 일반 이미지로 변경
         val updatedExistingImages = _vehicleImages.value.map { it.copy(isMain = false) }
@@ -157,16 +242,44 @@ class VehicleRegistrationViewModel : ViewModel() {
         clearError("images")
     }
 
+    fun addVehicleImageAsMainAndUpload(imageUri: Uri, context: android.content.Context) {
+        println("🔄 메인 이미지 추가 및 업로드 시작: $imageUri")
+        // 기존 메인 이미지들을 모두 일반 이미지로 변경
+        val updatedExistingImages = _vehicleImages.value.map { it.copy(isMain = false) }
+
+        // 새 메인 이미지를 맨 앞에 추가
+        val newMainImage = VehicleImage(
+            imageUri = imageUri,
+            isMain = true
+        )
+        _vehicleImages.value = listOf(newMainImage) + updatedExistingImages
+        clearError("images")
+
+        // 즉시 업로드
+        viewModelScope.launch {
+            uploadSingleImage(newMainImage, context)
+        }
+    }
+
     fun removeVehicleImage(imageId: String) {
+        val imageToRemove = _vehicleImages.value.find { it.id == imageId }
+
+        // iOS와 동일: uploadedImageUrls에서도 제거
+        if (imageToRemove?.uploadedUrl != null) {
+            _uploadedImageUrls.value = _uploadedImageUrls.value.filter { it != imageToRemove.uploadedUrl }
+        }
+
         val updatedImages = _vehicleImages.value.filter { it.id != imageId }
         _vehicleImages.value = updatedImages
 
-        if (updatedImages.isNotEmpty() && updatedImages.none { it.isMain }) {
+        // iOS와 동일: 메인 이미지를 삭제한 경우 첫 번째 이미지를 메인으로 설정
+        if (imageToRemove?.isMain == true && updatedImages.isNotEmpty()) {
             setMainImage(updatedImages.first().id)
         }
     }
 
     fun setMainImage(imageId: String) {
+        // iOS와 동일: 모든 이미지의 isMain을 false로 하고, 선택된 이미지만 true로 설정
         _vehicleImages.value = _vehicleImages.value.map { image ->
             image.copy(isMain = image.id == imageId)
         }
@@ -263,27 +376,54 @@ class VehicleRegistrationViewModel : ViewModel() {
     }
 
     fun submitVehicleRegistration(context: android.content.Context) {
+        println("🚀 submitVehicleRegistration 호출됨")
         _isSubmitting.value = true
 
         viewModelScope.launch {
             try {
-                // 1. 먼저 이미지 업로드
-                if (_vehicleImages.value.isNotEmpty()) {
-                    if (!uploadImages(context)) {
-                        // 이미지 업로드 실패시 처리 중단
-                        return@launch
-                    }
+                println("📸 이미지 개수: ${_vehicleImages.value.size}")
+                println("🔗 업로드된 URL 개수: ${_uploadedImageUrls.value.size}")
+
+                // 이미지가 있는데 업로드된 URL이 없다면 경고만 출력 (임시)
+                if (_vehicleImages.value.isNotEmpty() && _uploadedImageUrls.value.isEmpty()) {
+                    println("⚠️ 경고: 이미지가 있지만 업로드되지 않았음. 로그인이 필요할 수 있습니다.")
+                    // 임시로 빈 URL 리스트로 진행
                 }
 
-                // 2. 매물 정보 등록
-                val mainImageUrl = _uploadedImageUrls.value.firstOrNull() ?: ""
-                val productImageUrls = _uploadedImageUrls.value.drop(1)
+                // 2. 매물 정보 등록 (이미지가 1장이면 mainProductImageUrl만, 2장 이상이면 productImageUrl에 배치)
+                val mainImageUrl = _vehicleImages.value.find { it.isMain }?.uploadedUrl ?: ""
+                val otherImageUrls = _vehicleImages.value
+                    .filter { !it.isMain && it.uploadedUrl != null }
+                    .mapNotNull { it.uploadedUrl }
+
+                // 이미지가 1장만 있는 경우: mainProductImageUrl만 사용, productImageUrl은 빈 리스트
+                // 이미지가 2장 이상인 경우: 메인 이미지를 첫 번째로, 나머지 이미지들을 뒤에 배치
+                val allImageUrls = if (_vehicleImages.value.size == 1) {
+                    emptyList() // 1장만 있으면 productImageUrl은 비움
+                } else if (mainImageUrl.isNotEmpty()) {
+                    listOf(mainImageUrl) + otherImageUrls
+                } else {
+                    otherImageUrls
+                }
 
                 val cleanPrice = _price.value.replace(",", "")
                 val cleanMileage = _mileage.value.replace(",", "")
 
+                println("📝 매물 정보 준비:")
+                println("  제목: ${_title.value}")
+                println("  차종: ${_vehicleType.value}")
+                println("  모델: ${_vehicleModel.value}")
+                println("  연식: ${_generation.value}")
+                println("  주행거리: $cleanMileage")
+                println("  가격: $cleanPrice")
+                println("  지역: ${_location.value}")
+                println("  번호판: ${_plateHash.value}")
+                println("  이미지 개수: ${_vehicleImages.value.size}")
+                println("  메인 이미지: $mainImageUrl")
+                println("  모든 이미지 (productImageUrl): $allImageUrls")
+
                 val request = VehicleRegistrationRequest(
-                    generation = _generation.value,
+                    generation = _generation.value.toIntOrNull() ?: 0,
                     mileage = cleanMileage,
                     vehicleType = _vehicleType.value,
                     vehicleModel = _vehicleModel.value,
@@ -292,11 +432,12 @@ class VehicleRegistrationViewModel : ViewModel() {
                     plateHash = _plateHash.value,
                     title = _title.value,
                     description = _description.value,
-                    productImageUrl = productImageUrls,
+                    productImageUrl = allImageUrls, // 1장이면 빈 리스트, 2장 이상이면 메인 이미지가 0번 인덱스
                     option = _vehicleOptions.value,
-                    mainProductImageUrl = mainImageUrl
+                    mainProductImageUrl = mainImageUrl // 항상 메인 이미지 URL 설정
                 )
 
+                println("🌐 API 호출 시작")
                 submitToAPI(request)
 
             } catch (e: Exception) {
@@ -309,15 +450,33 @@ class VehicleRegistrationViewModel : ViewModel() {
 
     private suspend fun submitToAPI(request: VehicleRegistrationRequest) {
         try {
-            when (val result = com.nobody.campick.services.VehicleService.registerVehicle(request)) {
-                is com.nobody.campick.services.network.ApiResult.Success -> {
-                    _alertMessage.value = "매물이 성공적으로 등록되었습니다."
-                    _showSuccessAlert.value = true
-                    resetForm()
+            val editingId = _editingProductId.value
+
+            if (editingId != null) {
+                println("🔧 매물 수정 API 호출 (id: $editingId)")
+                when (val result = com.nobody.campick.services.VehicleService.updateProduct(editingId, request)) {
+                    is com.nobody.campick.services.network.ApiResult.Success -> {
+                        _alertMessage.value = "성공적으로 매물 정보가 수정되었습니다."
+                        _showSuccessAlert.value = true
+                        resetForm()
+                    }
+                    is com.nobody.campick.services.network.ApiResult.Error -> {
+                        _alertMessage.value = "매물 수정에 실패했습니다: ${result.message}"
+                        _showErrorAlert.value = true
+                    }
                 }
-                is com.nobody.campick.services.network.ApiResult.Error -> {
-                    _alertMessage.value = "매물 등록에 실패했습니다: ${result.message}"
-                    _showErrorAlert.value = true
+            } else {
+                println("🆕 매물 등록 API 호출")
+                when (val result = com.nobody.campick.services.VehicleService.registerVehicle(request)) {
+                    is com.nobody.campick.services.network.ApiResult.Success -> {
+                        _alertMessage.value = "매물이 성공적으로 등록되었습니다."
+                        _showSuccessAlert.value = true
+                        resetForm()
+                    }
+                    is com.nobody.campick.services.network.ApiResult.Error -> {
+                        _alertMessage.value = "매물 등록에 실패했습니다: ${result.message}"
+                        _showErrorAlert.value = true
+                    }
                 }
             }
 
@@ -326,6 +485,69 @@ class VehicleRegistrationViewModel : ViewModel() {
             _showErrorAlert.value = true
         } finally {
             _isSubmitting.value = false
+        }
+    }
+
+    /**
+     * 단일 이미지 업로드 처리 (iOS 로직과 동일)
+     */
+    private suspend fun uploadSingleImage(vehicleImage: VehicleImage, context: android.content.Context) {
+        try {
+            println("📤 단일 이미지 업로드 시작: ${vehicleImage.isMain}메인, ID: ${vehicleImage.id}")
+
+            // 1. Uri에서 Bitmap 로드
+            val bitmap = com.nobody.campick.utils.ImageUtils.loadCompressedBitmapFromUri(
+                context, vehicleImage.imageUri
+            ) ?: return
+
+            // 2. 메인 이미지인 경우 4:3 비율로 크롭 처리
+            val processedBitmap = if (vehicleImage.isMain) {
+                com.nobody.campick.utils.ImageUtils.processMainImage(bitmap)
+            } else {
+                bitmap
+            }
+
+            // 3. Swift와 동일한 압축 로직 적용 (1MB 이하)
+            val compressedImageData = com.nobody.campick.utils.ImageUtils.compressImage(
+                processedBitmap, maxSizeInMB = 1.0
+            ) ?: return
+
+            // 4. API 업로드
+            when (val result = com.nobody.campick.services.VehicleService.uploadImage(compressedImageData)) {
+                is com.nobody.campick.services.network.ApiResult.Success -> {
+                    // iOS와 동일: uploadedImageUrls에 추가하고 vehicleImage.uploadedUrl 설정
+                    _uploadedImageUrls.value = _uploadedImageUrls.value + result.data
+
+                    // 해당 이미지의 uploadedUrl 설정 (iOS와 동일)
+                    val updatedImages = _vehicleImages.value.map { image ->
+                        if (image.id == vehicleImage.id) {
+                            image.copy(uploadedUrl = result.data)
+                        } else {
+                            image
+                        }
+                    }
+                    _vehicleImages.value = updatedImages
+
+                    val sizeString = com.nobody.campick.utils.ImageUtils.getImageSizeString(compressedImageData)
+                    println("✅ 단일 이미지 업로드 성공: ${vehicleImage.isMain}메인, 크기: $sizeString, URL: ${result.data}")
+                }
+                is com.nobody.campick.services.network.ApiResult.Error -> {
+                    _alertMessage.value = "이미지 업로드에 실패했습니다: ${result.message}"
+                    _showErrorAlert.value = true
+                    println("❌ 단일 이미지 업로드 실패: ${result.message}")
+                }
+            }
+
+            // 메모리 정리
+            if (processedBitmap != bitmap) {
+                processedBitmap.recycle()
+            }
+            bitmap.recycle()
+
+        } catch (e: Exception) {
+            _alertMessage.value = "이미지 업로드 중 오류가 발생했습니다: ${e.localizedMessage}"
+            _showErrorAlert.value = true
+            println("❌ 단일 이미지 업로드 예외: ${e.message}")
         }
     }
 

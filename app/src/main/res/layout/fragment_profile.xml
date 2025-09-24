@@ -25,28 +25,12 @@
             android:orientation="vertical"
             android:paddingBottom="100dp">
 
-            <!-- Loading State -->
-            <LinearLayout
+            <!-- Loading State - Skeleton UI -->
+            <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/loadingContainer"
                 android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:visibility="gone">
-
-                <ProgressBar
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:indeterminateTint="@color/brand_orange" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="로딩 중..."
-                    android:textColor="@color/primary_text"
-                    android:layout_marginTop="16dp" />
-
-            </LinearLayout>
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
 
             <!-- Error State -->
             <LinearLayout

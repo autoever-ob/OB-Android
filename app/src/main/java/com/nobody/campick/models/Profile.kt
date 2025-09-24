@@ -20,7 +20,8 @@ data class ProfileData(
     @SerialName("createdAt")
     val createdAtString: String,
     val profileImage: String? = null,
-    val description: String? = null
+    val description: String? = null,
+    val mobileNumber: String? = null
 )
 
 // 하위 호환성을 위한 별칭
@@ -47,39 +48,25 @@ data class Page<T>(
     val totalElements: Int,
     val totalPages: Int,
     val size: Int,
-    val number: Int,
-    val numberOfElements: Int,
-    val first: Boolean,
+    @SerialName("page")
+    val number: Int? = null,
+    val numberOfElements: Int? = null,
+    val first: Boolean? = null,
     val last: Boolean
 )
 
 @Serializable
 data class Product(
-    val productId: String,
+    val productId: Int,
     val title: String,
-    val cost: String,
+    val cost: Int,
     val generation: Int,
     val mileage: Int,
     val location: String,
     @SerialName("createdAt")
     val createdAtString: String,
-    val thumbNailUrl: String,
+    @SerialName("productImageUrl")
+    val thumbNailUrl: String? = null,
     val status: String
 )
 
-// 기존 UserProfile 구조체 (하위 호환성을 위해 유지)
-data class UserProfile(
-    val id: String,
-    val name: String,
-    val avatar: String,
-    val joinDate: String,
-    val rating: Double,
-    val totalListings: Int,
-    val activeListing: Int,
-    val totalSales: Int,
-    val isDealer: Boolean,
-    val location: String,
-    val phone: String? = null,
-    val email: String? = null,
-    val bio: String? = null
-)

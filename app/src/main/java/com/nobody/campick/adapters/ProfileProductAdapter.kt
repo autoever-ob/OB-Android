@@ -10,6 +10,7 @@ import com.nobody.campick.R
 import com.nobody.campick.resources.theme.AppColors
 import com.nobody.campick.databinding.ItemEmptyProductsBinding
 import com.nobody.campick.databinding.ItemProductCardBinding
+import com.nobody.campick.databinding.ItemLoadMoreBinding
 import com.nobody.campick.models.Product
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -72,7 +73,7 @@ class ProfileProductAdapter(
                 ProductViewHolder(binding)
             }
             TYPE_LOAD_MORE -> {
-                val binding = ItemProductCardBinding.inflate(
+                val binding = ItemLoadMoreBinding.inflate(
                     LayoutInflater.from(parent.context), parent, false
                 )
                 LoadMoreViewHolder(binding)
@@ -103,7 +104,7 @@ class ProfileProductAdapter(
         fun bind(product: Product) {
             binding.apply {
                 // 제품 이미지
-                if (product.thumbNailUrl.isNotEmpty()) {
+                if (!product.thumbNailUrl.isNullOrEmpty()) {
                     Glide.with(itemView.context)
                         .load(product.thumbNailUrl)
                         .placeholder(R.drawable.ic_car)
@@ -113,12 +114,12 @@ class ProfileProductAdapter(
                     imageViewProduct.setImageResource(R.drawable.ic_car)
                 }
 
-                // 제품 정보
+                // 제품 정보 (Swift와 동일하게)
                 textViewTitle.text = product.title
-                textViewPrice.text = product.cost
-                textViewGeneration.text = "${product.generation}세대"
-                textViewMileage.text = formatMileage(product.mileage)
-                textViewLocation.text = product.location
+                textViewPrice.text = formatCost(product.cost)
+                textViewGeneration.text = product.generation.toString()
+                textViewMileage.text = formatMileage(product.mileage) + "km"
+                textViewLocation.text = shortLocation(product.location)
                 textViewDate.text = formatDate(product.createdAtString)
 
                 // 상태 설정
@@ -132,10 +133,10 @@ class ProfileProductAdapter(
         }
 
         private fun setStatusChip(status: String) {
-            val (text, color, backgroundRes) = when (status.lowercase()) {
-                "active" -> Triple("판매중", AppColors.brandLightGreen, R.drawable.status_chip_active)
-                "reserved" -> Triple("예약중", AppColors.brandOrange, R.drawable.status_chip_reserved)
-                "sold" -> Triple("판매완료", AppColors.brandWhite60, R.drawable.status_chip_sold)
+            val (text, color, backgroundRes) = when (status.uppercase()) {
+                "AVAILABLE", "ACTIVE" -> Triple("판매중", AppColors.brandLightGreen, R.drawable.status_chip_active)
+                "RESERVE", "RESERVED" -> Triple("예약중", AppColors.brandOrange, R.drawable.status_chip_reserved)
+                "SOLD" -> Triple("판매완료", AppColors.brandWhite60, R.drawable.status_chip_sold)
                 else -> Triple(status, AppColors.brandOrange, R.drawable.status_chip_background)
             }
 
@@ -146,8 +147,36 @@ class ProfileProductAdapter(
             }
         }
 
+        private fun formatCost(cost: Int): String {
+            return try {
+                val formatter = NumberFormat.getNumberInstance(Locale.getDefault())
+                "${formatter.format(cost)}만원"
+            } catch (e: Exception) {
+                "${cost}만원"
+            }
+        }
+
         private fun formatMileage(mileage: Int): String {
-            return NumberFormat.getNumberInstance(Locale.getDefault()).format(mileage) + "km"
+            // Swift 로직과 동일: 10만 이상은 12.3만, 1만 이상은 1.2만, 1만 미만은 1,234
+            return when {
+                mileage >= 100000 -> {
+                    val value = mileage / 10000.0
+                    String.format(Locale.getDefault(), "%.1f만", value)
+                }
+                mileage >= 10000 -> {
+                    val value = mileage / 10000.0
+                    String.format(Locale.getDefault(), "%.1f만", value)
+                }
+                else -> {
+                    NumberFormat.getNumberInstance(Locale.getDefault()).format(mileage)
+                }
+            }
+        }
+
+        private fun shortLocation(fullLocation: String): String {
+            // Swift 로직: "경상북도 구미시" -> "구미시", "서울특별시 강남구" -> "강남구"
+            val parts = fullLocation.split(Regex("\\s+")).filter { it.isNotEmpty() }
+            return parts.lastOrNull() ?: fullLocation
         }
 
         private fun formatDate(dateString: String): String {
@@ -170,25 +199,12 @@ class ProfileProductAdapter(
     ) : RecyclerView.ViewHolder(binding.root)
 
     inner class LoadMoreViewHolder(
-        private val binding: ItemProductCardBinding
+        private val binding: ItemLoadMoreBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind() {
-            binding.apply {
-                // 더보기 버튼으로 변경
-                imageViewProduct.visibility = View.GONE
-                textViewTitle.text = "더 보기"
-                textViewTitle.setTextColor(AppColors.brandOrange.toArgb())
-                textViewPrice.visibility = View.GONE
-                textViewGeneration.visibility = View.GONE
-                textViewMileage.visibility = View.GONE
-                textViewLocation.visibility = View.GONE
-                textViewDate.visibility = View.GONE
-                textViewStatus.visibility = View.GONE
-
-                root.setOnClickListener {
-                    onLoadMore()
-                }
+            binding.root.setOnClickListener {
+                onLoadMore()
             }
         }
     }

@@ -2,6 +2,7 @@ package com.nobody.campick.components.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -27,10 +28,14 @@ import com.nobody.campick.models.home.RecommendedVehicle
 import com.nobody.campick.models.home.RecommendedVehicleStatus
 import com.nobody.campick.resources.theme.AppColors
 import com.nobody.campick.viewmodels.RecommendVehicleViewModel
+import java.text.NumberFormat
+import java.util.Locale
 
 // 추천 매물 전체 컴포넌트
 @Composable
 fun RecommendVehicle(
+    onVehicleClick: (String) -> Unit = {},
+    onViewAllClick: () -> Unit = {},
     viewModel: RecommendVehicleViewModel = viewModel()
 ) {
     val vehicles by viewModel.vehicles.collectAsState()
@@ -39,7 +44,7 @@ fun RecommendVehicle(
         viewModel.loadRecommendations()
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // 상단 헤더
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -60,7 +65,7 @@ fun RecommendVehicle(
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
-            TextButton(onClick = { }) {
+            TextButton(onClick = onViewAllClick) {
                 Text(
                     text = "전체보기",
                     color = AppColors.brandOrange,
@@ -87,10 +92,14 @@ fun RecommendVehicle(
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 vehicles.forEachIndexed { index, dto ->
+                    val formattedPrice = dto.price.toLongOrNull()?.let {
+                        "${NumberFormat.getNumberInstance(Locale.getDefault()).format(it)}만원"
+                    } ?: dto.price
+
                     val vehicle = RecommendedVehicle(
                         productId = dto.productId,
                         title = dto.title,
-                        price = "${dto.price}원",
+                        price = formattedPrice,
                         generation = dto.generation,
                         mileage = "${dto.mileage}km",
                         location = dto.location,
@@ -106,6 +115,7 @@ fun RecommendVehicle(
                         badgeColor = if (index == 0) Color(0xFF4CAF50)
                         else if (index == 1) Color(0xFFFF6F00)
                         else Color.Transparent,
+                        onClick = { onVehicleClick(vehicle.productId.toString()) },
                         onLikeClick = { viewModel.toggleLike(vehicle.productId) }
                     )
                 }
@@ -119,12 +129,14 @@ fun VehicleCard(
     vehicle: RecommendedVehicle,
     badge: String?,
     badgeColor: Color,
+    onClick: () -> Unit = {},
     onLikeClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -186,14 +198,14 @@ fun VehicleCard(
                 Spacer(modifier = Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        imageVector = Icons.Filled.Favorite,
                         contentDescription = null,
-                        tint = Color.Yellow,
+                        tint = Color(0xFFFF4444),
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
                         text = "${vehicle.likeCount}",
-                        color = Color.Yellow,
+                        color = Color(0xFFFF4444),
                         fontSize = 12.sp
                     )
                 }

@@ -3,6 +3,7 @@ package com.nobody.campick.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nobody.campick.models.vehicle.VehicleDetailViewData
+import com.nobody.campick.models.product.ProductMapper
 import com.nobody.campick.services.VehicleService
 import com.nobody.campick.services.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,9 +33,9 @@ class VehicleDetailViewModel : ViewModel() {
             _errorMessage.value = null
 
             try {
-                when (val result = VehicleService.fetchVehicleDetail(productId)) {
+                when (val result = VehicleService.fetchProductDetail(productId)) {
                     is ApiResult.Success -> {
-                        _detail.value = result.data
+                        _detail.value = ProductMapper.toVehicleDetailViewData(result.data)
                     }
                     is ApiResult.Error -> {
                         // API 실패시 mock data로 fallback
@@ -76,9 +77,23 @@ class VehicleDetailViewModel : ViewModel() {
 
 
                 // API 호출
-                when (val result = VehicleService.toggleLike(currentDetail.id)) {
+                when (val result = VehicleService.toggleProductLike(currentDetail.id)) {
                     is ApiResult.Success -> {
-                        // API 성공 - UI는 이미 업데이트됨
+                        // API 성공 - 응답에서 실제 상태 확인하여 동기화
+                        val message = result.data.data
+                        val isNowLiked = message.contains("좋아요") && !message.contains("취소")
+
+                        // 서버 응답과 로컬 상태 동기화
+                        _detail.value = currentDetail.copy(
+                            isLiked = isNowLiked,
+                            likeCount = if (isNowLiked && !currentDetail.isLiked) {
+                                currentDetail.likeCount + 1
+                            } else if (!isNowLiked && currentDetail.isLiked) {
+                                maxOf(0, currentDetail.likeCount - 1)
+                            } else {
+                                currentDetail.likeCount
+                            }
+                        )
                     }
                     is ApiResult.Error -> {
                         // API 실패 - 원래 상태로 롤백
@@ -103,5 +118,40 @@ class VehicleDetailViewModel : ViewModel() {
 
     fun refresh(productId: String) {
         load(productId)
+    }
+
+    fun changeStatus(productId: String, newStatus: com.nobody.campick.models.vehicle.VehicleStatus) {
+        val currentDetail = _detail.value ?: return
+        val oldStatus = currentDetail.status
+
+        viewModelScope.launch {
+            try {
+                println("🔄 Changing product status - productId: $productId, oldStatus: ${oldStatus.apiValue}, newStatus: ${newStatus.apiValue}")
+
+                // Optimistic update
+                _detail.value = currentDetail.copy(status = newStatus)
+
+                // API 호출
+                when (val result = VehicleService.updateProductStatus(productId, newStatus)) {
+                    is ApiResult.Success -> {
+                        println("✅ Product status update success - response: ${result.data}")
+                        if (!result.data.success || (result.data.status < 200 || result.data.status >= 300)) {
+                            throw Exception(result.data.message)
+                        }
+                    }
+                    is ApiResult.Error -> {
+                        println("❌ Product status update failed - error: ${result.message}")
+                        // Rollback on failure
+                        _detail.value = currentDetail.copy(status = oldStatus)
+                        _errorMessage.value = result.message
+                    }
+                }
+            } catch (e: Exception) {
+                println("❌ Product status update exception - error: ${e.message}")
+                // Rollback on failure
+                _detail.value = currentDetail.copy(status = oldStatus)
+                _errorMessage.value = e.message ?: "상태 변경에 실패했습니다."
+            }
+        }
     }
 }

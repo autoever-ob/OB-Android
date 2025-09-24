@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/brand_background"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="주행거리 선택"
+        android:textSize="18sp"
+        android:textColor="@color/primary_text"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="16dp" />
+
+    <NumberPicker
+        android:id="@+id/mileagePicker"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:theme="@style/NumberPickerTheme" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingTop="16dp">
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="취소"
+            android:textColor="@color/secondary_text"
+            android:backgroundTint="@android:color/transparent"
+            style="@style/Widget.Material3.Button.TextButton" />
+
+        <Button
+            android:id="@+id/btnConfirm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="완료"
+            android:textColor="@color/brand_orange"
+            android:backgroundTint="@android:color/transparent"
+            style="@style/Widget.Material3.Button.TextButton" />
+
+    </LinearLayout>
+
+</LinearLayout>

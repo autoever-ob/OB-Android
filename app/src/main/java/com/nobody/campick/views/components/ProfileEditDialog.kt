@@ -156,6 +156,7 @@ class ProfileEditDialog(
     private fun loadProfileData() {
         editTextNickname.setText(profile.nickname)
         editTextDescription.setText(profile.description ?: "")
+        editTextPhoneNumber.setText(profile.mobileNumber ?: "")
 
         if (!profile.profileImage.isNullOrEmpty()) {
             Glide.with(context)

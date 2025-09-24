@@ -91,6 +91,13 @@ object TokenManager {
     }
 
     /**
+     * 모든 토큰 삭제 (UserState.logout()에서 사용)
+     */
+    fun clearAll() {
+        clearTokens()
+    }
+
+    /**
      * 로그인 상태 확인
      */
     fun isLoggedIn(): Boolean {

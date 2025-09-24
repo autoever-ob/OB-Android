@@ -3,6 +3,10 @@ package com.nobody.campick.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -11,23 +15,19 @@ import com.nobody.campick.databinding.ItemVehicleImageBinding
 import com.nobody.campick.models.vehicle.VehicleImage
 
 sealed class ImageListItem {
-    object GalleryButton : ImageListItem()
-    object CameraButton : ImageListItem()
-    object MainImageButton : ImageListItem()
+    object AddImageButton : ImageListItem()
     data class ImageItem(val vehicleImage: VehicleImage) : ImageListItem()
 }
 
 class VehicleImageAdapter(
-    private val onGalleryClick: () -> Unit,
-    private val onCameraClick: () -> Unit,
-    private val onMainImageClick: () -> Unit,
+    private val onAddImageClick: (View) -> Unit,
     private val onImageClick: (String) -> Unit,
     private val onImageRemove: (String) -> Unit,
     private val onSetMainImage: (String) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val items = mutableListOf<ImageListItem>()
-    private val maxImages = 9
+    private val maxImages = 10
 
     init {
         updateItems()
@@ -37,6 +37,7 @@ class VehicleImageAdapter(
         items.clear()
         items.addAll(images.map { ImageListItem.ImageItem(it) })
         updateItems()
+        println("🖼️ VehicleImageAdapter: submitList called with ${images.size} images, total items: ${items.size}")
         notifyDataSetChanged()
     }
 
@@ -44,51 +45,30 @@ class VehicleImageAdapter(
         val imageCount = items.count { it is ImageListItem.ImageItem }
 
         // 기존 버튼들 제거
-        items.removeAll {
-            it is ImageListItem.GalleryButton ||
-            it is ImageListItem.CameraButton ||
-            it is ImageListItem.MainImageButton
-        }
+        items.removeAll { it is ImageListItem.AddImageButton }
 
-        // Swift와 동일한 로직으로 버튼 추가
-        if (imageCount < 10) {
-            items.add(ImageListItem.GalleryButton)
-        }
-
-        if (imageCount < 9) {
-            items.add(ImageListItem.CameraButton)
-        }
-
-        if (imageCount < 8) {
-            items.add(ImageListItem.MainImageButton)
+        // 최대 10개 이미지까지 허용, 그보다 적으면 추가 버튼 표시
+        if (imageCount < maxImages) {
+            items.add(ImageListItem.AddImageButton)
+            println("🖼️ VehicleImageAdapter: Add button added, imageCount: $imageCount, maxImages: $maxImages")
+        } else {
+            println("🖼️ VehicleImageAdapter: No button added, imageCount: $imageCount")
         }
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when (items[position]) {
-            is ImageListItem.GalleryButton -> VIEW_TYPE_GALLERY_BUTTON
-            is ImageListItem.CameraButton -> VIEW_TYPE_CAMERA_BUTTON
-            is ImageListItem.MainImageButton -> VIEW_TYPE_MAIN_IMAGE_BUTTON
+        return when (val item = items[position]) {
+            is ImageListItem.AddImageButton -> VIEW_TYPE_ADD_IMAGE_BUTTON
             is ImageListItem.ImageItem -> VIEW_TYPE_IMAGE
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            VIEW_TYPE_GALLERY_BUTTON -> {
+            VIEW_TYPE_ADD_IMAGE_BUTTON -> {
                 val view = LayoutInflater.from(parent.context)
                     .inflate(R.layout.item_add_gallery_button, parent, false)
-                GalleryButtonViewHolder(view)
-            }
-            VIEW_TYPE_CAMERA_BUTTON -> {
-                val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_add_camera_button, parent, false)
-                CameraButtonViewHolder(view)
-            }
-            VIEW_TYPE_MAIN_IMAGE_BUTTON -> {
-                val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_add_main_image_button, parent, false)
-                MainImageButtonViewHolder(view)
+                AddImageButtonViewHolder(view)
             }
             VIEW_TYPE_IMAGE -> {
                 val binding = ItemVehicleImageBinding.inflate(
@@ -104,9 +84,7 @@ class VehicleImageAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is GalleryButtonViewHolder -> holder.bind()
-            is CameraButtonViewHolder -> holder.bind()
-            is MainImageButtonViewHolder -> holder.bind()
+            is AddImageButtonViewHolder -> holder.bind()
             is ImageViewHolder -> {
                 val item = items[position] as ImageListItem.ImageItem
                 holder.bind(item.vehicleImage)
@@ -116,26 +94,10 @@ class VehicleImageAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    inner class GalleryButtonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class AddImageButtonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind() {
             itemView.setOnClickListener {
-                onGalleryClick()
-            }
-        }
-    }
-
-    inner class CameraButtonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind() {
-            itemView.setOnClickListener {
-                onCameraClick()
-            }
-        }
-    }
-
-    inner class MainImageButtonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind() {
-            itemView.setOnClickListener {
-                onMainImageClick()
+                onAddImageClick(itemView)
             }
         }
     }
@@ -146,35 +108,55 @@ class VehicleImageAdapter(
 
         fun bind(item: VehicleImage) {
             binding.apply {
+                // 이미지 로드 (uploadedUrl 우선, 없으면 imageUri)
+                val imageSource = item.uploadedUrl ?: item.imageUri
                 Glide.with(itemView.context)
-                    .load(item.imageUri)
+                    .load(imageSource)
                     .centerCrop()
                     .placeholder(R.drawable.placeholder_image)
                     .into(imageView)
 
-                textViewMain.isVisible = item.isMain
-                buttonSetMain.isVisible = !item.isMain
-                buttonRemove.isVisible = true
+                // 업로드 상태에 따른 UI 표시
+                val isUploaded = item.uploadedUrl != null
 
-                buttonSetMain.setOnClickListener {
-                    onSetMainImage(item.id)
+                // 메인 이미지 여부에 따른 테두리 표시 (iOS와 동일)
+                if (item.isMain) {
+                    imageView.setBackgroundResource(R.drawable.main_image_border)
+                } else {
+                    imageView.setBackgroundResource(R.drawable.styled_input_background)
                 }
+
+                // 메인 라벨 표시 (iOS와 동일)
+                textViewMain.isVisible = item.isMain
+
+                // 로딩 오버레이 표시 (iOS와 동일 - 업로드 중일 때만)
+                loadingOverlay.isVisible = !isUploaded
+
+                // 삭제 버튼은 업로드된 이미지만 표시 (iOS와 동일)
+                buttonRemove.isVisible = isUploaded
+
+                // "메인으로 설정" 버튼은 사용하지 않음 (클릭으로 대체)
+                buttonSetMain.isVisible = false
 
                 buttonRemove.setOnClickListener {
-                    onImageRemove(item.id)
+                    if (isUploaded) {
+                        onImageRemove(item.id)
+                    }
                 }
 
+                // 이미지 클릭으로 메인 이미지 설정 (iOS와 동일)
                 root.setOnClickListener {
-                    onImageClick(item.id)
+                    if (isUploaded) {
+                        onSetMainImage(item.id)
+                    }
                 }
             }
         }
     }
 
+
     companion object {
-        private const val VIEW_TYPE_GALLERY_BUTTON = 0
-        private const val VIEW_TYPE_CAMERA_BUTTON = 1
-        private const val VIEW_TYPE_MAIN_IMAGE_BUTTON = 2
-        private const val VIEW_TYPE_IMAGE = 3
+        private const val VIEW_TYPE_ADD_IMAGE_BUTTON = 0
+        private const val VIEW_TYPE_IMAGE = 1
     }
 }

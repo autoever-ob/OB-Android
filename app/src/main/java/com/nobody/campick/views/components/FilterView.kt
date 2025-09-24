@@ -292,7 +292,7 @@ private fun YearRangeSection(
 
         RangeSlider(
             range = yearRange,
-            bounds = 2010.0..2024.0,
+            bounds = 1990.0..2024.0,
             step = 1.0,
             onRangeChange = onRangeChange
         )

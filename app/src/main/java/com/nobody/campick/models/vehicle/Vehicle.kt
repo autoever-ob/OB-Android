@@ -23,6 +23,24 @@ enum class VehicleStatus(val value: String) {
             RESERVED -> AppColors.brandOrange
             SOLD -> AppColors.brandWhite50
         }
+
+    val apiValue: String
+        get() = when (this) {
+            ACTIVE -> "AVAILABLE"
+            RESERVED -> "RESERVED"
+            SOLD -> "SOLD"
+        }
+
+    companion object {
+        fun fromApiValue(value: String): VehicleStatus {
+            return when (value.uppercase()) {
+                "AVAILABLE", "ACTIVE" -> ACTIVE
+                "RESERVE", "RESERVED" -> RESERVED
+                "SOLD", "COMPLETED", "SOLD_OUT" -> SOLD
+                else -> ACTIVE
+            }
+        }
+    }
 }
 
 @Serializable

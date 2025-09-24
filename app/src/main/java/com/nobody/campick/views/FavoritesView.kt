@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nobody.campick.resources.theme.AppColors
 import com.nobody.campick.viewmodels.FavoritesViewModel
-import com.nobody.campick.views.components.TopBarView
 import com.nobody.campick.views.components.VehicleCardView
+import com.nobody.campick.views.components.TopBarView
 
 @Composable
 fun FavoritesView(
@@ -29,85 +29,83 @@ fun FavoritesView(
     val favorites by viewModel.favorites.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .background(AppColors.background)
+            .background(AppColors.background),
+        verticalArrangement = Arrangement.Top
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Top Bar
-            TopBarView(
-                title = "찜 목록",
-                onBackClick = onBackClick
-            )
+        // 헤더
+        TopBarView(
+            title = "찜"
+        )
 
-            // Divider
-            Divider(
-                modifier = Modifier.fillMaxWidth(),
-                thickness = 1.dp,
-                color = AppColors.brandWhite20
-            )
+        // iOS와 완전히 동일한 상단 구분선
+        androidx.compose.material3.HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(),
+            thickness = 1.dp,
+            color = Color.White.copy(alpha = 0.12f)
+        )
 
-            // Content
-            if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 50.dp),
-                    contentAlignment = Alignment.TopCenter
+        if (isLoading) {
+            // Swift와 동일한 스켈레톤 UI
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(300.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    horizontal = 12.dp,
+                    vertical = 12.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Swift와 동일하게 4개의 스켈레톤 카드 표시
+                items(count = 4) {
+                    com.nobody.campick.views.components.VehicleCardSkeleton()
+                }
+            }
+        } else if (favorites.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    CircularProgressIndicator(
-                        color = AppColors.brandOrange
+                    Text(
+                        text = "찜한 매물이 없습니다",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "관심있는 매물을 찜해보세요",
+                        color = AppColors.brandWhite70,
+                        fontSize = 14.sp
                     )
                 }
-            } else if (favorites.isEmpty()) {
-                // Empty state
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "찜한 매물이 없습니다",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "관심있는 매물을 찜해보세요",
-                            color = AppColors.brandWhite70,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            } else {
-                // Favorites Grid
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(300.dp),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = 12.dp,
-                        end = 12.dp,
-                        top = 12.dp,
-                        bottom = 80.dp // Account for bottom tab bar
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(favorites) { vehicle ->
-                        VehicleCardView(
-                            vehicle = vehicle,
-                            onCardClick = onVehicleClick,
-                            onFavoriteClick = { vehicleId ->
-                                viewModel.removeFavorite(vehicleId)
-                            }
-                        )
-                    }
+            }
+        } else {
+            // iOS와 완전히 동일한 그리드 구조
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(300.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    horizontal = 12.dp,
+                    vertical = 12.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(favorites) { vehicle ->
+                    VehicleCardView(
+                        vehicle = vehicle,
+                        onCardClick = onVehicleClick,
+                        onFavoriteClick = { vehicleId ->
+                            viewModel.removeFavorite(vehicleId)
+                        }
+                    )
                 }
             }
         }
