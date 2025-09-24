@@ -86,4 +86,12 @@ object ProductApi {
             )
         }
     }
+    /**
+     * 찜하기/찜취소 (좋아요)
+     */
+    suspend fun toggleLike(productId: String): ApiResult<Unit> {
+        return APIService.patch<Unit>(
+            endpoint = Endpoint.ProductLike(productId), // like 전용 엔드포인트
+        )
+    }
 }

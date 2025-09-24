@@ -106,7 +106,7 @@ fun RecommendVehicle(
                         badgeColor = if (index == 0) Color(0xFF4CAF50)
                         else if (index == 1) Color(0xFFFF6F00)
                         else Color.Transparent,
-                        onLikeClick = {  }
+                        onLikeClick = { viewModel.toggleLike(vehicle.productId) }
                     )
                 }
             }

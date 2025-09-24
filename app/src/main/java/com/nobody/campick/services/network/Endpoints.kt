@@ -21,6 +21,7 @@ sealed class Endpoint(val path: String) {
     object Products : Endpoint("/api/product")
     object ProductInfo : Endpoint("/api/product/info")
     data class ProductDetail(val productId: String) : Endpoint("/api/product/$productId")
+    data class ProductLike(val productId: String) : Endpoint("/api/product/$productId/like")
 
     // 채팅 관련
     object ChatList : Endpoint("/api/chat/my")
@@ -73,6 +74,8 @@ sealed class Endpoint(val path: String) {
 
             is CarRecommend, is ChatList, is Products, is ProductInfo, is ProductDetail,
             is MemberInfo, is MemberProducts, is MemberSoldProducts, is MemberMyProductList -> Method.GET
+
+            is ProductLike -> Method.PATCH
         }
 
     /**

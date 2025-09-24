@@ -55,14 +55,10 @@ object VehicleService {
             endpoint = Endpoint.ProductInfo
         )
     }
-
-    /**
-     * 찜하기/찜취소 (좋아요)
-     */
     suspend fun toggleLike(productId: String): ApiResult<Unit> {
-        return APIService.post<Unit>(
-            endpoint = Endpoint.ProductDetail(productId), // 실제로는 like 전용 엔드포인트 필요
-            body = mapOf("action" to "toggle_like")
+        return APIService.patch<Unit>(
+            endpoint = Endpoint.ProductLike(productId), // like 전용 엔드포인트
         )
     }
+
 }
