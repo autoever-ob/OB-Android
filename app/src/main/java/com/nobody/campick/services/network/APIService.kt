@@ -26,6 +26,13 @@ object APIService {
 
     @PublishedApi
     internal val client = OkHttpClient.Builder()
+        .certificatePinner(
+            CertificatePinner.Builder()
+                .add("campick.shop","sha256/zl7w9TnvVV4VXqpG2nIB3V" +
+                        "" +
+                        "4iapuAuk2+PMBmZl3lZVE=")
+                .build()
+        )
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
