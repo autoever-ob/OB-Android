@@ -7,13 +7,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.nobody.campick.activities.MainTabActivity
+import com.nobody.campick.repositories.FilterRepository
 import com.nobody.campick.components.home.BottomBanner
 import com.nobody.campick.components.home.FindVehicle
 import com.nobody.campick.components.home.Header
 import com.nobody.campick.components.home.ProfileMenu
 import com.nobody.campick.components.home.RecommendVehicle
-import com.nobody.campick.components.home.TopBanner
+import com.nobody.campick.components.home.AutoSlidingBanner
 import com.nobody.campick.components.home.VehicleCategory
 import com.nobody.campick.models.home.RecommendedVehicle
 import com.nobody.campick.models.home.RecommendedVehicleStatus
@@ -21,6 +24,30 @@ import com.nobody.campick.models.home.RecommendedVehicleStatus
 @Composable
 fun Home() {
     var showSlideMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val navigateToFindVehicle: () -> Unit = {
+        (context as? MainTabActivity)?.navigateToFindVehicle()
+    }
+
+    val navigateToFindVehicleWithFilter: (String) -> Unit = { vehicleType ->
+        val currentFilters = FilterRepository.filterOptions.value
+        FilterRepository.updateFilterOptions(
+            currentFilters.copy(
+                selectedVehicleTypes = setOf(vehicleType)
+            )
+        )
+        navigateToFindVehicle()
+    }
+
+    val navigateToVehicleDetail: (String) -> Unit = { vehicleId ->
+        val intent = com.nobody.campick.activities.VehicleDetailActivity.newIntent(
+            context = context,
+            vehicleId = vehicleId
+        )
+        context.startActivity(intent)
+    }
+
     // 뷰모델 (웹소켓 연결용)
 //    val viewModel = remember { HomeChatViewModel() }
     val vehicles = listOf(
@@ -87,14 +114,18 @@ fun Home() {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                TopBanner()
-                FindVehicle()
-                VehicleCategory()
-                RecommendVehicle()
+                AutoSlidingBanner()
+                FindVehicle(onClick = navigateToFindVehicle)
+                VehicleCategory(onCategoryClick = navigateToFindVehicleWithFilter)
+                Spacer(modifier = Modifier.height((-24).dp))
+                RecommendVehicle(
+                    onVehicleClick = navigateToVehicleDetail,
+                    onViewAllClick = navigateToFindVehicle
+                )
                 BottomBanner(
                     onDetailClick = { /* TODO: 네비게이션 처리 */ }
                 )
-                Spacer(modifier = Modifier.height(70.dp)) // safeAreaInset 대체
+                Spacer(modifier = Modifier.height(70.dp))
             }
         }
 

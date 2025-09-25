@@ -21,7 +21,11 @@ data class RecommendedVehicle(
     val thumbNail: String,
     val status: RecommendedVehicleStatus,
     val isLiked: Boolean,
-    val likeCount: Int
+    val likeCount: Int,
+    val vehicleType: String? = null,
+    val vehicleModel: String? = null,
+    val fuelType: String? = null,
+    val transmission: String? = null
 ) {
     val id: Int
         get() = productId

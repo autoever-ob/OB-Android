@@ -90,6 +90,11 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
+
+    // Accompanist Pager for auto-sliding banner
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

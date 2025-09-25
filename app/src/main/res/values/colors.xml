@@ -31,6 +31,7 @@
     <color name="gray_30">#4D808080</color>
     <color name="brand_orange_80">#CCF97316</color>
     <color name="brand_orange_20">#33F97316</color>
+    <color name="brand_orange_10">#1AF97316</color>
     <color name="brand_light_green_20">#3322C55E</color>
     <color name="red_80">#CCFF5722</color>
     <color name="tab_divider">#4D9E9E9E</color>
@@ -43,4 +44,9 @@
     <color name="background_dark">#0B211A</color>
     <color name="red">#FF5722</color>
     <color name="brand_white">#FFFFFF</color>
+
+    <!-- Dialog colors -->
+    <color name="secondary_text">#99FFFFFF</color>
+    <color name="secondary_text_dark">#1AFFFFFF</color>
+    <color name="brand_background_dark">#061410</color>
 </resources>

@@ -11,14 +11,34 @@
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground">
 
-    <!-- Product Image -->
-    <ImageView
-        android:id="@+id/imageViewProduct"
-        android:layout_width="80dp"
-        android:layout_height="60dp"
-        android:scaleType="centerCrop"
-        android:background="@drawable/product_image_background"
-        android:src="@drawable/ic_car" />
+    <!-- Product Image with Status Chip -->
+    <FrameLayout
+        android:layout_width="100dp"
+        android:layout_height="80dp">
+
+        <ImageView
+            android:id="@+id/imageViewProduct"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@drawable/product_image_background"
+            android:src="@drawable/ic_car" />
+
+        <!-- Status Chip Overlay -->
+        <TextView
+            android:id="@+id/textViewStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="판매중"
+            android:textColor="@android:color/white"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:background="@drawable/status_chip_background"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:layout_margin="4dp"
+            android:layout_gravity="top|start" />
+    </FrameLayout>
 
     <!-- Product Info -->
     <LinearLayout
@@ -34,9 +54,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="현대 포레스트 프리미엄"
-            android:textColor="@color/primary_text"
+            android:textColor="@android:color/white"
             android:textSize="16sp"
-            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -49,87 +69,120 @@
             android:textColor="@color/brand_orange"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="2dp" />
 
-        <!-- Details -->
+        <!-- First Row: 연식 | 주행거리 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:layout_marginTop="2dp">
 
-            <TextView
-                android:id="@+id/textViewGeneration"
-                android:layout_width="wrap_content"
+            <!-- 연식 -->
+            <LinearLayout
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:text="2020세대"
-                android:textColor="@color/brand_white_60"
-                android:textSize="12sp" />
+                android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" • "
-                android:textColor="@color/brand_white_60"
-                android:textSize="12sp" />
+                <TextView
+                    android:layout_width="25dp"
+                    android:layout_height="wrap_content"
+                    android:text="연식"
+                    android:textColor="@color/brand_white_60"
+                    android:textSize="12sp" />
 
-            <TextView
-                android:id="@+id/textViewMileage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="50,000km"
-                android:textColor="@color/brand_white_60"
-                android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/textViewGeneration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2020"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" • "
-                android:textColor="@color/brand_white_60"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/textViewLocation"
+            <!-- 주행거리 -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="서울시 강남구"
-                android:textColor="@color/brand_white_60"
-                android:textSize="12sp"
-                android:maxLines="1"
-                android:ellipsize="end" />
+                android:orientation="horizontal"
+                android:layout_marginStart="8dp">
 
+                <TextView
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="주행거리"
+                    android:textColor="@color/brand_white_60"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/textViewMileage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="50,000km"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Date and Status -->
+        <!-- Second Row: 지역 | 등록일 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="4dp">
+            android:layout_marginTop="2dp">
 
-            <TextView
-                android:id="@+id/textViewDate"
+            <!-- 지역 -->
+            <LinearLayout
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="25dp"
+                    android:layout_height="wrap_content"
+                    android:text="지역"
+                    android:textColor="@color/brand_white_60"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/textViewLocation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="강남구"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- 등록일 -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="09.16"
-                android:textColor="@color/brand_white_60"
-                android:textSize="12sp" />
+                android:orientation="horizontal"
+                android:layout_marginStart="8dp">
 
-            <!-- Status Chip -->
-            <TextView
-                android:id="@+id/textViewStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="판매중"
-                android:textColor="@color/brand_light_green"
-                android:textSize="12sp"
-                android:background="@drawable/status_chip_background"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="4dp" />
+                <TextView
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="등록일"
+                    android:textColor="@color/brand_white_60"
+                    android:textSize="12sp" />
 
+                <TextView
+                    android:id="@+id/textViewDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="09.16"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>

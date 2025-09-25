@@ -31,15 +31,14 @@ class VehicleOptionAdapter(
 
         fun bind(item: VehicleOption) {
             binding.apply {
-                textViewOptionName.text = item.optionName
-                checkBox.isChecked = item.isInclude
-
-                checkBox.setOnCheckedChangeListener { _, isChecked ->
-                    onOptionChecked(item, isChecked)
-                }
+                tvOptionName.text = item.optionName
+                ivCheckbox.setImageResource(
+                    if (item.isInclude) com.nobody.campick.R.drawable.ic_checkbox_checked
+                    else com.nobody.campick.R.drawable.ic_checkbox_unchecked
+                )
 
                 root.setOnClickListener {
-                    checkBox.isChecked = !checkBox.isChecked
+                    onOptionChecked(item, !item.isInclude)
                 }
             }
         }

@@ -12,6 +12,7 @@ import com.nobody.campick.models.chat.ChatVehicle
 import androidx.compose.ui.Modifier
 import com.nobody.campick.ui.theme.CampickTheme
 import com.nobody.campick.views.ChatRoom
+import com.nobody.campick.views.FavoritesView
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,24 +68,12 @@ class MainActivity : ComponentActivity() {
 //                        },
 //                    )
 
-                        ChatRoom(
-                            seller = ChatSeller(
-                                id = "1",
-                                name = "티파니 갱",
-                                avatar = "https://example.com/avatar1.png",
-                                isOnline = true,
-                                lastSeen = null,
-                                phoneNumber = "010-1234-5678"
-                            ),
-                            vehicle = ChatVehicle(
-                                id = "101",
-                                title = "현대 포레스트 프리미엄",
-                                price = 50000000,
-                                status = "판매중",
-                                image = "https://example.com/vehicle1.png"
-                            ),
-                            onBack = { finish() } // MainActivity에서라면 액티비티 종료
-                        )
+                    // 찜 페이지 테스트를 위해 FavoritesView 표시
+                    FavoritesView(
+                        onVehicleClick = { vehicleId ->
+                            println("차량 클릭됨: $vehicleId")
+                        }
+                    )
                     }
                 }
             }

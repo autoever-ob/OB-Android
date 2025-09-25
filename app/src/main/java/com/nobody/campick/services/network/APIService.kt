@@ -70,6 +70,56 @@ object APIService {
     }
 
     /**
+     * GET 요청 (직접 파싱 - ApiResponse 래핑 없음)
+     */
+    suspend inline fun <reified T> getDirect(
+        endpoint: Endpoint,
+        queryParams: Map<String, String> = emptyMap()
+    ): ApiResult<T> = withContext(Dispatchers.IO) {
+        try {
+            val urlBuilder = endpoint.url.toHttpUrl().newBuilder()
+            queryParams.forEach { (key, value) ->
+                urlBuilder.addQueryParameter(key, value)
+            }
+
+            val request = Request.Builder()
+                .url(urlBuilder.build())
+                .get()
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string() ?: ""
+
+            try {
+                println("🔍 Direct GET parsing for type: ${T::class.simpleName}")
+                println("🔍 Response body: $responseBody")
+
+                val directResponse = json.decodeFromString<T>(responseBody)
+                println("✅ Successfully parsed direct response")
+                ApiResult.Success(directResponse)
+            } catch (e: Exception) {
+                println("💥 Direct JSON parsing failed: ${e.message}")
+                e.printStackTrace()
+                when {
+                    response.isSuccessful -> ApiResult.Error("응답 파싱 실패: ${e.message}")
+                    response.code == 401 -> {
+                        TokenManager.clearTokens()
+                        ApiResult.Error("인증이 필요합니다")
+                    }
+                    response.code == 403 -> ApiResult.Error("권한이 없습니다. 로그인이 필요합니다.")
+                    response.code in 400..499 -> ApiResult.Error("클라이언트 오류 (${response.code}): ${response.message}")
+                    response.code in 500..599 -> ApiResult.Error("서버 오류 (${response.code}): ${response.message}")
+                    else -> ApiResult.Error("HTTP ${response.code}: ${response.message}")
+                }
+            }
+        } catch (e: IOException) {
+            ApiResult.Error("네트워크 연결 오류: ${e.message}")
+        } catch (e: Exception) {
+            ApiResult.Error("알 수 없는 오류: ${e.message}")
+        }
+    }
+
+    /**
      * POST 요청
      */
     suspend inline fun <reified T> post(
@@ -77,10 +127,14 @@ object APIService {
         body: Any? = null
     ): ApiResult<T> = withContext(Dispatchers.IO) {
         try {
-            val requestBody = body?.let {
-                val jsonString = json.encodeToString(it)
-                jsonString.toRequestBody("application/json".toMediaType())
-            } ?: "".toRequestBody("application/json".toMediaType())
+            val requestBody = when (body) {
+                null -> "".toRequestBody("application/json".toMediaType())
+                is String -> body.toRequestBody("application/json".toMediaType())
+                else -> {
+                    // Any 타입을 직렬화하지 말고, 사전에 직렬화된 String만 허용
+                    throw IllegalArgumentException("Body must be pre-serialized String or null. Use Json.encodeToString() before calling this method.")
+                }
+            }
 
             val request = Request.Builder()
                 .url(endpoint.url)
@@ -101,10 +155,13 @@ object APIService {
         body: Any? = null
     ): ApiResult<T> = withContext(Dispatchers.IO) {
         try {
-            val requestBody = body?.let {
-                val jsonString = json.encodeToString(it)
-                jsonString.toRequestBody("application/json".toMediaType())
-            } ?: "".toRequestBody("application/json".toMediaType())
+            val requestBody = when (body) {
+                null -> "".toRequestBody("application/json".toMediaType())
+                is String -> body.toRequestBody("application/json".toMediaType())
+                else -> {
+                    throw IllegalArgumentException("Body must be pre-serialized String or null. Use Json.encodeToString() before calling this method.")
+                }
+            }
 
             val request = Request.Builder()
                 .url(endpoint.url)
@@ -117,17 +174,20 @@ object APIService {
         }
     }
     /**
-    * PATCH 요청
-    */
+     * PATCH 요청
+     */
     suspend inline fun <reified T> patch(
         endpoint: Endpoint,
         body: Any? = null
     ): ApiResult<T> = withContext(Dispatchers.IO) {
         try {
-            val requestBody = body?.let {
-                val jsonString = json.encodeToString(it)
-                jsonString.toRequestBody("application/json".toMediaType())
-            } ?: "".toRequestBody("application/json".toMediaType())
+            val requestBody = when (body) {
+                null -> "".toRequestBody("application/json".toMediaType())
+                is String -> body.toRequestBody("application/json".toMediaType())
+                else -> {
+                    throw IllegalArgumentException("Body must be pre-serialized String or null. Use Json.encodeToString() before calling this method.")
+                }
+            }
 
             val request = Request.Builder()
                 .url(endpoint.url)
@@ -139,8 +199,6 @@ object APIService {
             ApiResult.Error(e.message ?: "Unknown error occurred")
         }
     }
-
-
 
     /**
      * DELETE 요청
@@ -199,6 +257,64 @@ object APIService {
     }
 
     /**
+     * 다중 파일 업로드 (iOS 스타일) - ApiResponse 래핑 없이 직접 파싱
+     */
+    suspend inline fun <reified T> uploadFiles(
+        endpoint: Endpoint,
+        files: List<Pair<ByteArray, String>>,
+        fieldName: String = "files"
+    ): ApiResult<T> = withContext(Dispatchers.IO) {
+        try {
+            val multipartBuilder = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+
+            files.forEachIndexed { index, (data, _) ->
+                val requestBody = data.toRequestBody("image/jpeg".toMediaType())
+                multipartBuilder.addFormDataPart(
+                    fieldName,
+                    "image_$index.jpg",
+                    requestBody
+                )
+            }
+
+            val request = Request.Builder()
+                .url(endpoint.url)
+                .post(multipartBuilder.build())
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string() ?: ""
+
+            try {
+                println("🔍 Direct parsing for type: ${T::class.simpleName}")
+                println("🔍 Response body: $responseBody")
+
+                val directResponse = json.decodeFromString<T>(responseBody)
+                println("✅ Successfully parsed direct response")
+                ApiResult.Success(directResponse)
+            } catch (e: Exception) {
+                println("💥 Direct JSON parsing failed: ${e.message}")
+                e.printStackTrace()
+                when {
+                    response.isSuccessful -> ApiResult.Error("응답 파싱 실패: ${e.message}")
+                    response.code == 401 -> {
+                        TokenManager.clearTokens()
+                        ApiResult.Error("인증이 필요합니다")
+                    }
+                    response.code == 403 -> ApiResult.Error("권한이 없습니다. 로그인이 필요합니다.")
+                    response.code in 400..499 -> ApiResult.Error("클라이언트 오류 (${response.code}): ${response.message}")
+                    response.code in 500..599 -> ApiResult.Error("서버 오류 (${response.code}): ${response.message}")
+                    else -> ApiResult.Error("HTTP ${response.code}: ${response.message}")
+                }
+            }
+        } catch (e: IOException) {
+            ApiResult.Error("네트워크 연결 오류: ${e.message}")
+        } catch (e: Exception) {
+            ApiResult.Error("알 수 없는 오류: ${e.message}")
+        }
+    }
+
+    /**
      * 요청 실행 및 응답 처리
      */
     suspend inline fun <reified T> executeRequest(request: Request): ApiResult<T> {
@@ -248,6 +364,9 @@ object APIService {
                     response.code == 401 -> {
                         TokenManager.clearTokens()
                         ApiResult.Error("인증이 필요합니다")
+                    }
+                    response.code == 403 -> {
+                        ApiResult.Error("권한이 없습니다. 로그인이 필요합니다.")
                     }
                     response.code in 400..499 -> {
                         ApiResult.Error("클라이언트 오류 (${response.code}): ${response.message}")

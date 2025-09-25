@@ -6,9 +6,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.nobody.campick.activities.ProfileActivity
 import com.nobody.campick.ui.theme.CampickTheme
 import com.nobody.campick.views.VehicleDetailView
-import com.nobody.campick.ui.profile.ProfileActivity
 
 class VehicleDetailActivity : ComponentActivity() {
 
@@ -33,20 +33,21 @@ class VehicleDetailActivity : ComponentActivity() {
                 VehicleDetailView(
                     vehicleId = vehicleId,
                     onBackClick = { finish() },
-                    onShareClick = {
-                        // TODO: Implement share functionality
-                        shareVehicle(vehicleId)
+                    onEditClick = {
+                        // 수정 모드로 MainTabActivity 열기 (finish 없이 - 뒤로가기로 돌아올 수 있도록)
+                        val intent = Intent(this@VehicleDetailActivity, MainTabActivity::class.java).apply {
+                            putExtra(MainTabActivity.EXTRA_EDITING_PRODUCT_ID, vehicleId)
+                        }
+                        startActivity(intent)
                     },
-                    onSellerClick = {
-                        // TODO: Navigate to seller profile or show seller modal
-                        println("Seller clicked")
+                    onChatClick = { chatId ->
+                        // TODO: Navigate to chat
+                        println("Chat clicked: $chatId")
                     },
-                    onProfileDetailClick = { sellerId, isOwnProfile ->
-                        // Launch ProfileActivity with seller information
+                    onProfileClick = { sellerId ->
                         val intent = ProfileActivity.newIntent(
                             context = this@VehicleDetailActivity,
-                            memberId = sellerId,
-                            isOwnProfile = isOwnProfile
+                            memberId = sellerId
                         )
                         startActivity(intent)
                     }

@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class VehicleRegistrationRequest(
-    val generation: String,
+    val generation: Int,
     val mileage: String,
     val vehicleType: String,
     val vehicleModel: String,

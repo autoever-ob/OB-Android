@@ -17,16 +17,20 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun MenuItem(
-    iconRes: Int,               // 아이콘 (drawable 리소스 id)
+    icon: String,               // 이모지 아이콘 (Swift와 동일)
     title: String,              // 제목
     subtitle: String,           // 부제목
     badge: String? = null,      // 뱃지 텍스트
-    onClick: () -> Unit = {}    // 클릭 시 동작 (destination 대신 콜백)
+    onShowSlideMenuChange: (Boolean) -> Unit = {},
+    onClick: () -> Unit = {}    // 클릭 시 동작
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable {
+                onShowSlideMenuChange(false)
+                onClick()
+            }
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -43,11 +47,9 @@ fun MenuItem(
                     .background(Color.White.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = title,
-                    tint = Color(0xFFFF6F00), // brandOrange
-                    modifier = Modifier.size(18.dp)
+                Text(
+                    text = icon,
+                    fontSize = 18.sp
                 )
             }
 

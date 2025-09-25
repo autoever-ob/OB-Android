@@ -25,14 +25,15 @@ fun TopBarView(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .background(AppColors.brandBackground)
+            .padding(16.dp)
     ) {
         // Back Button
         if (onBackClick != null) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .size(34.dp)
+                    .size(40.dp)
                     .background(
                         AppColors.brandWhite10,
                         CircleShape
@@ -53,7 +54,7 @@ fun TopBarView(
         Text(
             text = title,
             color = Color.White,
-            fontSize = 22.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.Center)
         )

@@ -30,7 +30,7 @@
 <!--            </intent-filter>-->
 <!--        </activity>-->
         <activity
-            android:name=".activities.MainTabActivity"
+            android:name=".activities.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.Campick"
             android:label="Campick">
@@ -40,19 +40,28 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.VehicleRegistrationActivity"
+            android:name=".activities.MainTabActivity"
             android:exported="false"
-            android:theme="@style/Theme.Campick" />
+            android:theme="@style/Theme.Campick"
+            android:label="Campick Main" />
         <activity
             android:name=".activities.VehicleDetailActivity"
             android:exported="false"
             android:theme="@style/Theme.Campick" />
         <activity
-            android:name=".ui.profile.ProfileActivity"
+            android:name=".activities.ProfileActivity"
             android:exported="false"
             android:theme="@style/Theme.Campick" />
         <activity
             android:name=".activities.ImageCropActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Campick" />
+        <activity
+            android:name=".activities.MyProductsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Campick" />
+        <activity
+            android:name=".activities.SignupActivity"
             android:exported="false"
             android:theme="@style/Theme.Campick" />
         <activity

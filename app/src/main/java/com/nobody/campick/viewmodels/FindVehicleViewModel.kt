@@ -1,13 +1,16 @@
 package com.nobody.campick.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.nobody.campick.models.vehicle.FilterOptions
 import com.nobody.campick.models.vehicle.SortOption
 import com.nobody.campick.models.vehicle.Vehicle
 import com.nobody.campick.models.vehicle.VehicleStatus
-import com.nobody.campick.services.ProductApi
-import com.nobody.campick.services.VehicleMapper
+import com.nobody.campick.models.product.ProductFilterRequest
+import com.nobody.campick.models.product.ProductSort
+import com.nobody.campick.models.product.ProductMapper
+import com.nobody.campick.repositories.FilterRepository
 import com.nobody.campick.services.VehicleService
 import com.nobody.campick.services.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,23 +20,18 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.*
 
-class FindVehicleViewModel : ViewModel() {
+class FindVehicleViewModel() : ViewModel() {
 
-    // UI State
-    private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query.asStateFlow()
+    // UI State from Repository
+    val query: StateFlow<String> = FilterRepository.query
+    val filterOptions: StateFlow<FilterOptions> = FilterRepository.filterOptions
+    val selectedSort: StateFlow<SortOption> = FilterRepository.selectedSort
 
     private val _showingFilter = MutableStateFlow(false)
     val showingFilter: StateFlow<Boolean> = _showingFilter.asStateFlow()
 
     private val _showingSortView = MutableStateFlow(false)
     val showingSortView: StateFlow<Boolean> = _showingSortView.asStateFlow()
-
-    private val _filterOptions = MutableStateFlow(FilterOptions())
-    val filterOptions: StateFlow<FilterOptions> = _filterOptions.asStateFlow()
-
-    private val _selectedSort = MutableStateFlow(SortOption.RECENTLY_ADDED)
-    val selectedSort: StateFlow<SortOption> = _selectedSort.asStateFlow()
 
     // Data
     private val _vehicles = MutableStateFlow<List<Vehicle>>(emptyList())
@@ -42,13 +40,27 @@ class FindVehicleViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
+
+    private val _hasMoreData = MutableStateFlow(true)
+    val hasMoreData: StateFlow<Boolean> = _hasMoreData.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    // Pagination
+    private var currentPage = 0
+    private val pageSize = 30  // iOS와 동일한 페이지 크기
+    private var isLastPage = false
+
     init {
-        // Load mock data initially
-        loadMockData()
+        // Load vehicles on start
+        fetchVehicles()
     }
 
     fun updateQuery(newQuery: String) {
-        _query.value = newQuery
+        FilterRepository.updateQuery(newQuery)
     }
 
     fun onSubmitQuery() {
@@ -56,7 +68,7 @@ class FindVehicleViewModel : ViewModel() {
     }
 
     fun onChangeFilter(newFilters: FilterOptions) {
-        _filterOptions.value = newFilters
+        FilterRepository.updateFilterOptions(newFilters)
         fetchVehicles()
     }
 
@@ -65,7 +77,7 @@ class FindVehicleViewModel : ViewModel() {
     }
 
     fun onChangeSort(newSort: SortOption) {
-        _selectedSort.value = newSort
+        FilterRepository.updateSelectedSort(newSort)
         fetchVehicles()
     }
 
@@ -100,23 +112,26 @@ class FindVehicleViewModel : ViewModel() {
                 when (val result = VehicleService.fetchProductInfo()) {
                     is ApiResult.Success -> {
                         val availableOptions = result.data.option
-                        _filterOptions.value = _filterOptions.value.copy(
-                            availableOptions = availableOptions
+                        val currentFilters = FilterRepository.filterOptions.value
+                        FilterRepository.updateFilterOptions(
+                            currentFilters.copy(availableOptions = availableOptions)
                         )
                     }
                     is ApiResult.Error -> {
                         // Fall back to mock options on API failure
                         val mockOptions = listOf("샤워시설", "화장실", "침대", "주방", "에어컨", "난방", "TV", "냉장고")
-                        _filterOptions.value = _filterOptions.value.copy(
-                            availableOptions = mockOptions
+                        val currentFilters = FilterRepository.filterOptions.value
+                        FilterRepository.updateFilterOptions(
+                            currentFilters.copy(availableOptions = mockOptions)
                         )
                     }
                 }
             } catch (e: Exception) {
                 // Network failure - fall back to mock options for development
                 val mockOptions = listOf("샤워시설", "화장실", "침대", "주방", "에어컨", "난방", "TV", "냉장고")
-                _filterOptions.value = _filterOptions.value.copy(
-                    availableOptions = mockOptions
+                val currentFilters = FilterRepository.filterOptions.value
+                FilterRepository.updateFilterOptions(
+                    currentFilters.copy(availableOptions = mockOptions)
                 )
             }
         }
@@ -125,258 +140,165 @@ class FindVehicleViewModel : ViewModel() {
     private fun fetchVehicles() {
         viewModelScope.launch {
             _isLoading.value = true
+            _errorMessage.value = null
+            currentPage = 0
+            isLastPage = false
+
             try {
-                // Fetch vehicles from API
-                var mapped = when (val result = ProductApi.fetchProducts(page = 0, size = 30)) {
+                val filter = createProductFilter()
+                val sort = mapSortOption(FilterRepository.selectedSort.value)
+
+                println("🔍 Fetching vehicles - page: $currentPage, size: $pageSize")
+                println("🔍 Keyword: ${filter.keyword}")
+                println("🔍 Filter: mileage=${filter.mileageFrom}-${filter.mileageTo}, cost=${filter.costFrom}-${filter.costTo}, year=${filter.generationFrom}-${filter.generationTo}, types=${filter.types}")
+                println("🔍 Sort: ${sort.queryValue}")
+
+                when (val result = VehicleService.fetchProducts(
+                    page = currentPage,
+                    size = pageSize,
+                    filter = filter,
+                    sort = sort
+                )) {
                     is ApiResult.Success -> {
-                        result.data.content.map { VehicleMapper.mapToVehicle(it) }
+                        val vehicles = ProductMapper.toVehicleList(result.data.content)
+                        println("✅ Successfully fetched ${vehicles.size} vehicles")
+                        _vehicles.value = vehicles
+                        _hasMoreData.value = !result.data.last
+                        isLastPage = result.data.last
                     }
                     is ApiResult.Error -> {
-                        // Fall back to mock data on API failure
-                        getMockVehicles()
+                        println("❌ Error fetching vehicles: ${result.message}")
+                        _errorMessage.value = result.message
+                        // iOS와 동일: 네트워크 실패 시 빈 리스트로 설정
+                        _vehicles.value = emptyList()
                     }
                 }
-
-                // Client-side search filter
-                val q = _query.value.trim().lowercase()
-                if (q.isNotEmpty()) {
-                    mapped = mapped.filter { vehicle ->
-                        vehicle.title.lowercase().contains(q) || vehicle.location.lowercase().contains(q)
-                    }
-                }
-
-                // Apply filter options (price/mileage/year/vehicleTypes/options)
-                mapped = mapped.filter { vehicle ->
-                    val price = priceValue(vehicle.price)
-                    val mileage = mileageValue(vehicle.mileage)
-                    val year = yearValue(vehicle.year)
-
-                    val priceOK = price in _filterOptions.value.priceRange.start.toInt().._filterOptions.value.priceRange.endInclusive.toInt()
-                    val mileageOK = mileage in _filterOptions.value.mileageRange.start.toInt().._filterOptions.value.mileageRange.endInclusive.toInt()
-                    val yearOK = year in _filterOptions.value.yearRange.start.toInt().._filterOptions.value.yearRange.endInclusive.toInt()
-
-                    // Vehicle type filter
-                    val vehicleTypeOK = _filterOptions.value.selectedVehicleTypes.isEmpty() ||
-                        _filterOptions.value.selectedVehicleTypes.any { selectedType ->
-                            vehicle.title.contains(selectedType, ignoreCase = true)
-                        }
-
-                    // Options filter - for now we'll skip this as Vehicle model doesn't have options field
-                    // In real implementation, this would check vehicle.options against selectedOptions
-                    val optionsOK = true // _filterOptions.value.selectedOptions.isEmpty() || vehicle.options.containsAll(_filterOptions.value.selectedOptions)
-
-                    priceOK && mileageOK && yearOK && vehicleTypeOK && optionsOK
-                }
-
-                // Apply sorting
-                val sorted = when (_selectedSort.value) {
-                    SortOption.RECENTLY_ADDED -> mapped
-                    SortOption.LOW_PRICE -> mapped.sortedBy { priceValue(it.price) }
-                    SortOption.HIGH_PRICE -> mapped.sortedByDescending { priceValue(it.price) }
-                    SortOption.LOW_MILEAGE -> mapped.sortedBy { mileageValue(it.mileage) }
-                    SortOption.NEWEST_YEAR -> mapped.sortedByDescending { yearValue(it.year) }
-                }
-
-                _vehicles.value = sorted
-
             } catch (e: Exception) {
-                // Network failure - fall back to mock data for development
-                _vehicles.value = getMockVehicles().let { vehicles ->
-                    // Apply same filtering logic to mock data
-                    var filtered = vehicles
-
-                    // Search filter
-                    val q = _query.value.trim().lowercase()
-                    if (q.isNotEmpty()) {
-                        filtered = filtered.filter { vehicle ->
-                            vehicle.title.lowercase().contains(q) || vehicle.location.lowercase().contains(q)
-                        }
-                    }
-
-                    // Apply filter options
-                    filtered = filtered.filter { vehicle ->
-                        val price = priceValue(vehicle.price)
-                        val mileage = mileageValue(vehicle.mileage)
-                        val year = yearValue(vehicle.year)
-
-                        val priceOK = price in _filterOptions.value.priceRange.start.toInt().._filterOptions.value.priceRange.endInclusive.toInt()
-                        val mileageOK = mileage in _filterOptions.value.mileageRange.start.toInt().._filterOptions.value.mileageRange.endInclusive.toInt()
-                        val yearOK = year in _filterOptions.value.yearRange.start.toInt().._filterOptions.value.yearRange.endInclusive.toInt()
-
-                        // Vehicle type filter
-                        val vehicleTypeOK = _filterOptions.value.selectedVehicleTypes.isEmpty() ||
-                            _filterOptions.value.selectedVehicleTypes.any { selectedType ->
-                                vehicle.title.contains(selectedType, ignoreCase = true)
-                            }
-
-                        // Options filter - for now we'll skip this as Vehicle model doesn't have options field
-                        val optionsOK = true
-
-                        priceOK && mileageOK && yearOK && vehicleTypeOK && optionsOK
-                    }
-
-                    // Apply sorting
-                    when (_selectedSort.value) {
-                        SortOption.RECENTLY_ADDED -> filtered
-                        SortOption.LOW_PRICE -> filtered.sortedBy { priceValue(it.price) }
-                        SortOption.HIGH_PRICE -> filtered.sortedByDescending { priceValue(it.price) }
-                        SortOption.LOW_MILEAGE -> filtered.sortedBy { mileageValue(it.mileage) }
-                        SortOption.NEWEST_YEAR -> filtered.sortedByDescending { yearValue(it.year) }
-                    }
-                }
+                _errorMessage.value = "네트워크 오류가 발생했습니다"
+                _vehicles.value = emptyList()
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    // MARK: - Parsing helpers
-    private fun digits(from: String): Int {
-        val numbers = from.filter { it.isDigit() }
-        return numbers.toIntOrNull() ?: 0
-    }
+    /**
+     * 무한 스크롤을 위한 더 많은 데이터 로드
+     */
+    fun loadMoreVehicles() {
+        if (_isLoadingMore.value || isLastPage || !_hasMoreData.value) return
 
-    private fun priceValue(s: String): Int = digits(s)
+        viewModelScope.launch {
+            _isLoadingMore.value = true
 
-    private fun mileageValue(s: String): Int {
-        val normalized = s.replace(" ", "")
-            .replace(",", "")
-            .lowercase()
+            try {
+                val filter = createProductFilter()
+                val sort = mapSortOption(FilterRepository.selectedSort.value)
 
-        if (normalized.contains("만")) {
-            val numericString = normalized
-                .replace("만km", "")
-                .replace("만", "")
-                .replace("km", "")
-                .filter { it.isDigit() || it == '.' }
-            return numericString.toDoubleOrNull()?.times(10000)?.toInt() ?: 0
-        }
-
-        val numericString = normalized.replace("km", "").filter { it.isDigit() }
-        return numericString.toIntOrNull() ?: 0
-    }
-
-    private fun yearValue(s: String): Int = digits(s)
-
-    private fun formatMileage(raw: String): String {
-        val trimmed = raw.trim()
-        if (trimmed.isEmpty()) return "-"
-
-        val normalized = trimmed.replace(",", "")
-            .replace(" ", "")
-            .replace("KM", "km")
-
-        if (normalized.lowercase().contains("만")) {
-            val numericString = normalized.lowercase()
-                .replace("만km", "")
-                .replace("만", "")
-                .replace("km", "")
-                .filter { it.isDigit() || it == '.' }
-            return numericString.toDoubleOrNull()?.let { value ->
-                "${formatManValue(value)}만km"
-            } ?: (if (normalized.endsWith("km")) normalized else "${normalized}km")
-        }
-
-        val sanitized = normalized.replace("km", "")
-        val numericString = sanitized.filter { it.isDigit() || it == '.' }
-
-        val rawValue = numericString.toDoubleOrNull() ?: return trimmed
-
-        if (sanitized.contains(".") && rawValue < 1000) {
-            return "${formatManValue(rawValue)}만km"
-        }
-
-        if (rawValue >= 10000) {
-            val manValue = rawValue / 10000.0
-            return "${formatManValue(manValue)}만km"
-        }
-
-        val formatter = NumberFormat.getNumberInstance(Locale("ko", "KR"))
-        formatter.maximumFractionDigits = 0
-        val formatted = formatter.format(rawValue.toInt())
-        return "${formatted}km"
-    }
-
-    private fun formatManValue(value: Double): String {
-        val scaled = (value * 10).let { kotlin.math.round(it) } / 10
-        return if (kotlin.math.abs(scaled - kotlin.math.round(scaled)) < 0.0001) {
-            String.format("%.0f", scaled)
-        } else {
-            String.format("%.1f", scaled)
+                when (val result = VehicleService.fetchProducts(
+                    page = currentPage + 1,
+                    size = pageSize,
+                    filter = filter,
+                    sort = sort
+                )) {
+                    is ApiResult.Success -> {
+                        val pageData = result.data
+                        val newVehicles = ProductMapper.toVehicleList(pageData.content)
+                        _vehicles.value = _vehicles.value + newVehicles
+                        _hasMoreData.value = !pageData.last
+                        isLastPage = pageData.last
+                        currentPage++
+                    }
+                    is ApiResult.Error -> {
+                        _errorMessage.value = result.message
+                    }
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "추가 데이터 로드 중 오류가 발생했습니다"
+            } finally {
+                _isLoadingMore.value = false
+            }
         }
     }
 
-    // Mock data for testing
-    private fun getMockVehicles(): List<Vehicle> {
-        return listOf(
-            Vehicle(
-                id = "1",
-                imageName = "testImage1",
-                thumbnailURL = null,
-                title = "현대 포레스트",
-                price = "8,900만원",
-                year = "2022년",
-                mileage = "15,000km",
-                fuelType = "디젤",
-                transmission = "자동",
-                location = "서울",
-                status = VehicleStatus.ACTIVE,
-                postedDate = null,
-                isOnSale = true,
-                isFavorite = false
-            ),
-            Vehicle(
-                id = "2",
-                imageName = "testImage2",
-                thumbnailURL = null,
-                title = "기아 봉고 캠퍼",
-                price = "4,200만원",
-                year = "2021년",
-                mileage = "32,000km",
-                fuelType = "디젤",
-                transmission = "수동",
-                location = "부산",
-                status = VehicleStatus.RESERVED,
-                postedDate = null,
-                isOnSale = true,
-                isFavorite = true
-            ),
-            Vehicle(
-                id = "3",
-                imageName = "testImage3",
-                thumbnailURL = null,
-                title = "스타리아 캠퍼",
-                price = "7,200만원",
-                year = "2023년",
-                mileage = "8,000km",
-                fuelType = "가솔린",
-                transmission = "자동",
-                location = "인천",
-                status = VehicleStatus.ACTIVE,
-                postedDate = null,
-                isOnSale = true,
-                isFavorite = false
-            ),
-            Vehicle(
-                id = "4",
-                imageName = "testImage1",
-                thumbnailURL = null,
-                title = "벤츠 스프린터",
-                price = "12,500만원",
-                year = "2024년",
-                mileage = "5,000km",
-                fuelType = "디젤",
-                transmission = "자동",
-                location = "경기",
-                status = VehicleStatus.SOLD,
-                postedDate = null,
-                isOnSale = false,
-                isFavorite = false
-            )
+    /**
+     * FilterOptions를 ProductFilterRequest로 변환 (iOS 동일 로직)
+     */
+    private fun createProductFilter(): ProductFilterRequest {
+        val filters = FilterRepository.filterOptions.value
+        val searchQuery = FilterRepository.query.value
+
+        // iOS와 동일: 항상 필터 객체 생성 (전체 범위라도 전송)
+        val validTypes = filters.selectedVehicleTypes.toList()
+
+        return ProductFilterRequest(
+            keyword = if (searchQuery.isNotBlank()) searchQuery else null,
+            mileageFrom = filters.mileageRange.start.toInt(),
+            mileageTo = filters.mileageRange.endInclusive.toInt(),
+            costFrom = (filters.priceRange.start * 10000).toInt(),
+            costTo = (filters.priceRange.endInclusive * 10000).toInt(),
+            generationFrom = filters.yearRange.start.toInt(),
+            generationTo = filters.yearRange.endInclusive.toInt(),
+            types = if (validTypes.isNotEmpty()) validTypes else null,
+            options = null  // iOS는 options를 보내지 않음
         )
     }
 
-    private fun loadMockData() {
-        _vehicles.value = getMockVehicles()
+    /**
+     * SortOption을 ProductSort로 변환
+     */
+    private fun mapSortOption(sortOption: SortOption): ProductSort {
+        return when (sortOption) {
+            SortOption.RECENTLY_ADDED -> ProductSort.CREATED_AT_DESC
+            SortOption.LOW_PRICE -> ProductSort.COST_ASC
+            SortOption.HIGH_PRICE -> ProductSort.COST_DESC
+            SortOption.LOW_MILEAGE -> ProductSort.MILEAGE_ASC
+            SortOption.NEWEST_YEAR -> ProductSort.GENERATION_DESC
+        }
     }
+
+    /**
+     * 좋아요/좋아요 취소 토글
+     */
+    fun toggleLike(vehicleId: String) {
+        viewModelScope.launch {
+            try {
+                // 현재 차량 목록에서 해당 차량 찾기
+                val currentVehicles = _vehicles.value.toMutableList()
+                val vehicleIndex = currentVehicles.indexOfFirst { it.id == vehicleId }
+
+                if (vehicleIndex != -1) {
+                    val vehicle = currentVehicles[vehicleIndex]
+
+                    // 낙관적 업데이트 (즉시 UI 업데이트)
+                    val updatedVehicle = vehicle.copy(isFavorite = !vehicle.isFavorite)
+                    currentVehicles[vehicleIndex] = updatedVehicle
+                    _vehicles.value = currentVehicles
+
+                    // API 호출
+                    when (val result = VehicleService.toggleProductLike(vehicleId)) {
+                        is ApiResult.Success -> {
+                            // API 성공 - UI는 이미 업데이트됨
+                        }
+                        is ApiResult.Error -> {
+                            // API 실패 - 원래 상태로 롤백
+                            currentVehicles[vehicleIndex] = vehicle
+                            _vehicles.value = currentVehicles
+                            _errorMessage.value = "좋아요 처리 중 오류가 발생했습니다."
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "네트워크 오류가 발생했습니다."
+            }
+        }
+    }
+
+    /**
+     * 에러 메시지 클리어
+     */
+    fun clearError() {
+        _errorMessage.value = null
+    }
+
 }

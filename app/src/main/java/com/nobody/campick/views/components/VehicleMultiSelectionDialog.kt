@@ -41,7 +41,14 @@ class VehicleMultiSelectionDialog(
         )
 
         binding.textViewDialogTitle.text = title
+
+        // 닫기 버튼 - 선택사항 적용하지 않고 닫기
         binding.buttonClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        // 확인 버튼 - 선택사항 적용하고 닫기
+        binding.buttonConfirm.setOnClickListener {
             onSelectionChanged(selectedOptions)
             dialog.dismiss()
         }

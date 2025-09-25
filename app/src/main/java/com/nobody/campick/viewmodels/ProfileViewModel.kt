@@ -2,10 +2,12 @@ package com.nobody.campick.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nobody.campick.managers.UserState
 import com.nobody.campick.models.Page
 import com.nobody.campick.models.Product
 import com.nobody.campick.models.ProfileData
 import com.nobody.campick.services.ProfileService
+import com.nobody.campick.services.ProfileImageResponse
 import com.nobody.campick.services.network.ApiResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +36,26 @@ class ProfileViewModel : ViewModel() {
 
     private val _activeTab = MutableStateFlow(TabType.SELLING)
     val activeTab: StateFlow<TabType> = _activeTab.asStateFlow()
+
+    // 카운트 관련 StateFlow
+    private val _soldProductCount = MutableStateFlow(0)
+    val soldProductCount: StateFlow<Int> = _soldProductCount.asStateFlow()
+
+    private val _sellOrReserveProductCount = MutableStateFlow(0)
+    val sellOrReserveProductCount: StateFlow<Int> = _sellOrReserveProductCount.asStateFlow()
+
+    private val _allProductCount = MutableStateFlow(0)
+    val allProductCount: StateFlow<Int> = _allProductCount.asStateFlow()
+
+    // 프로필 업데이트 관련 StateFlow
+    private val _isUpdatingProfile = MutableStateFlow(false)
+    val isUpdatingProfile: StateFlow<Boolean> = _isUpdatingProfile.asStateFlow()
+
+    private val _isUploadingImage = MutableStateFlow(false)
+    val isUploadingImage: StateFlow<Boolean> = _isUploadingImage.asStateFlow()
+
+    private val _profileUpdateSuccess = MutableStateFlow(false)
+    val profileUpdateSuccess: StateFlow<Boolean> = _profileUpdateSuccess.asStateFlow()
 
     // 페이지 정보
     private var sellingProductsPage: Page<Product>? = null
@@ -68,7 +90,13 @@ class ProfileViewModel : ViewModel() {
             _isLoading.value = true
             _errorMessage.value = null
 
-            val targetMemberId = memberId ?: "1" // 기본값으로 1 사용 (실제로는 UserState에서 가져와야 함)
+            val targetMemberId = memberId?.takeIf { it.isNotBlank() } ?: UserState.memberId.value
+
+            if (targetMemberId.isBlank()) {
+                _errorMessage.value = "사용자 정보를 찾을 수 없습니다"
+                _isLoading.value = false
+                return@launch
+            }
 
             // 프로필 정보 조회
             when (val profileResult = ProfileService.fetchMemberInfo(targetMemberId)) {
@@ -86,8 +114,8 @@ class ProfileViewModel : ViewModel() {
                 }
             }
 
-            // 판매중 상품 조회
-            when (val sellingResult = ProfileService.fetchMemberProducts(targetMemberId, 0, 10)) {
+            // 판매중/예약중 상품 조회 (iOS와 동일한 엔드포인트 사용)
+            when (val sellingResult = ProfileService.fetchMemberSellOrReserveProducts(targetMemberId, 0, 2)) {
                 is ApiResult.Success -> {
                     sellingProductsPage = sellingResult.data
                     _sellingProducts.value = sellingResult.data.content
@@ -108,8 +136,8 @@ class ProfileViewModel : ViewModel() {
                 }
             }
 
-            // 판매완료 상품 조회
-            when (val soldResult = ProfileService.fetchMemberSoldProducts(targetMemberId, 0, 10)) {
+            // 판매완료 상품 조회 (iOS와 동일한 size=2 사용)
+            when (val soldResult = ProfileService.fetchMemberSoldProducts(targetMemberId, 0, 2)) {
                 is ApiResult.Success -> {
                     soldProductsPage = soldResult.data
                     _soldProducts.value = soldResult.data.content
@@ -135,14 +163,14 @@ class ProfileViewModel : ViewModel() {
     }
 
     /**
-     * 판매중 상품 더 로드
+     * 판매중 상품 더 로드 (iOS와 동일한 엔드포인트)
      */
     fun loadMoreSellingProducts(memberId: String? = null) {
         viewModelScope.launch {
-            val targetMemberId = memberId ?: "1"
+            val targetMemberId = memberId?.takeIf { it.isNotBlank() } ?: UserState.memberId.value
             val nextPage = currentSellingPage + 1
 
-            when (val result = ProfileService.fetchMemberProducts(targetMemberId, nextPage, 10)) {
+            when (val result = ProfileService.fetchMemberSellOrReserveProducts(targetMemberId, nextPage, 2)) {
                 is ApiResult.Success -> {
                     if (result.data.content.isNotEmpty()) {
                         sellingProductsPage = result.data
@@ -158,14 +186,14 @@ class ProfileViewModel : ViewModel() {
     }
 
     /**
-     * 판매완료 상품 더 로드
+     * 판매완료 상품 더 로드 (iOS와 동일한 size=2 사용)
      */
     fun loadMoreSoldProducts(memberId: String? = null) {
         viewModelScope.launch {
-            val targetMemberId = memberId ?: "1"
+            val targetMemberId = memberId?.takeIf { it.isNotBlank() } ?: UserState.memberId.value
             val nextPage = currentSoldPage + 1
 
-            when (val result = ProfileService.fetchMemberSoldProducts(targetMemberId, nextPage, 10)) {
+            when (val result = ProfileService.fetchMemberSoldProducts(targetMemberId, nextPage, 2)) {
                 is ApiResult.Success -> {
                     if (result.data.content.isNotEmpty()) {
                         soldProductsPage = result.data
@@ -209,8 +237,12 @@ class ProfileViewModel : ViewModel() {
      */
     fun hasMoreProducts(): Boolean {
         return when (_activeTab.value) {
-            TabType.SELLING -> sellingProductsPage?.let { !it.last } ?: false
-            TabType.SOLD -> soldProductsPage?.let { !it.last } ?: false
+            TabType.SELLING -> sellingProductsPage?.let { page ->
+                page.last == false || (page.number ?: 0) < (page.totalPages - 1)
+            } ?: false
+            TabType.SOLD -> soldProductsPage?.let { page ->
+                page.last == false || (page.number ?: 0) < (page.totalPages - 1)
+            } ?: false
         }
     }
 
@@ -263,5 +295,144 @@ class ProfileViewModel : ViewModel() {
      */
     fun clearRedirectToLogin() {
         _shouldRedirectToLogin.value = false
+    }
+
+    /**
+     * 매물 카운트 로드
+     */
+    fun loadProductCounts(memberId: String) {
+        viewModelScope.launch {
+            // 판매완료 매물 개수
+            when (val result = ProfileService.getProductSoldCount(memberId)) {
+                is ApiResult.Success -> _soldProductCount.value = result.data
+                is ApiResult.Error -> _soldProductCount.value = 0
+            }
+
+            // 판매중/예약중 매물 개수
+            when (val result = ProfileService.getProductSellOrReserveCount(memberId)) {
+                is ApiResult.Success -> _sellOrReserveProductCount.value = result.data
+                is ApiResult.Error -> _sellOrReserveProductCount.value = 0
+            }
+
+            // 전체 매물 개수
+            when (val result = ProfileService.getProductAllCount(memberId)) {
+                is ApiResult.Success -> _allProductCount.value = result.data
+                is ApiResult.Error -> _allProductCount.value = 0
+            }
+        }
+    }
+
+    /**
+     * 프로필 이미지 업로드
+     */
+    fun uploadProfileImage(imageData: ByteArray, onSuccess: (ProfileImageResponse) -> Unit) {
+        viewModelScope.launch {
+            _isUploadingImage.value = true
+            _errorMessage.value = null
+
+            when (val result = ProfileService.uploadProfileImage(imageData)) {
+                is ApiResult.Success -> {
+                    _isUploadingImage.value = false
+                    onSuccess(result.data)
+                    // 프로필 데이터 새로고침
+                    _profileData.value?.let { currentProfile ->
+                        _profileData.value = currentProfile.copy(
+                            profileImage = result.data.profileImageUrl
+                        )
+                    }
+                }
+                is ApiResult.Error -> {
+                    _isUploadingImage.value = false
+                    _errorMessage.value = "프로필 이미지 업로드에 실패했습니다: ${result.message}"
+                }
+            }
+        }
+    }
+
+    /**
+     * 프로필 정보 업데이트
+     */
+    fun updateProfileInfo(
+        nickname: String,
+        mobileNumber: String,
+        description: String
+    ) {
+        viewModelScope.launch {
+            _isUpdatingProfile.value = true
+            _errorMessage.value = null
+
+            when (val result = ProfileService.updateMemberInfo(nickname, mobileNumber, description)) {
+                is ApiResult.Success -> {
+                    _isUpdatingProfile.value = false
+                    _profileUpdateSuccess.value = true
+                    // 프로필 데이터 새로고침
+                    _profileData.value?.let { currentProfile ->
+                        _profileData.value = currentProfile.copy(
+                            nickname = nickname,
+                            description = description
+                        )
+                    }
+                }
+                is ApiResult.Error -> {
+                    _isUpdatingProfile.value = false
+                    _errorMessage.value = "프로필 정보 업데이트에 실패했습니다: ${result.message}"
+                }
+            }
+        }
+    }
+
+    /**
+     * 로그아웃
+     */
+    fun logout(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+
+            when (val result = ProfileService.logout()) {
+                is ApiResult.Success -> {
+                    // 서버 로그아웃 성공 시 전역 로그아웃 처리
+                    println("🎉 서버 로그아웃 성공 - 전역 로그아웃 실행")
+                    UserState.logout()
+
+                    _isLoading.value = false
+                    onSuccess()
+                }
+                is ApiResult.Error -> {
+                    // 서버 로그아웃 실패해도 로컬 로그아웃은 실행 (iOS와 동일)
+                    println("⚠️ 서버 로그아웃 실패하지만 로컬 로그아웃 실행: ${result.message}")
+                    UserState.logout()
+
+                    _isLoading.value = false
+                    onSuccess() // 로컬 로그아웃은 항상 성공으로 처리
+                }
+            }
+        }
+    }
+
+    /**
+     * 회원탈퇴
+     */
+    fun deleteMember(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+
+            when (val result = ProfileService.deleteMember()) {
+                is ApiResult.Success -> {
+                    _isLoading.value = false
+                    onSuccess()
+                }
+                is ApiResult.Error -> {
+                    _isLoading.value = false
+                    _errorMessage.value = "회원탈퇴에 실패했습니다: ${result.message}"
+                }
+            }
+        }
+    }
+
+    /**
+     * 프로필 업데이트 성공 플래그 클리어
+     */
+    fun clearProfileUpdateSuccess() {
+        _profileUpdateSuccess.value = false
     }
 }

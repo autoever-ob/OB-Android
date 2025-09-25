@@ -4,6 +4,8 @@ import android.app.Application
 import com.nobody.campick.managers.KeychainManager
 import com.nobody.campick.managers.NetworkMonitor
 import com.nobody.campick.managers.UserLocalStorage
+import com.nobody.campick.managers.UserPreferences
+import com.nobody.campick.managers.UserState
 import com.nobody.campick.services.network.TokenManager
 import com.nobody.campick.utils.AppLog
 
@@ -59,6 +61,22 @@ class CampickApplication : Application() {
             AppLog.info("TokenManager initialized", "INIT")
         } catch (e: Exception) {
             AppLog.error("Failed to initialize TokenManager: ${e.message}", "INIT", e)
+        }
+
+        // UserPreferences 초기화
+        try {
+            UserPreferences.initialize(this)
+            AppLog.info("UserPreferences initialized", "INIT")
+        } catch (e: Exception) {
+            AppLog.error("Failed to initialize UserPreferences: ${e.message}", "INIT", e)
+        }
+
+        // UserState 초기화 (토큰과 사용자 데이터가 있으면 자동 로그인)
+        try {
+            UserState.initialize()
+            AppLog.info("UserState initialized", "INIT")
+        } catch (e: Exception) {
+            AppLog.error("Failed to initialize UserState: ${e.message}", "INIT", e)
         }
     }
 

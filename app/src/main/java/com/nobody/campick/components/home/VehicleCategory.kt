@@ -2,6 +2,7 @@ package com.nobody.campick.components.home
 
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -27,14 +28,16 @@ import kotlin.collections.listOf
 data class CategoryItem(val imageRes: Int, val title: String)
 
 @Composable
-fun VehicleCategory() {
+fun VehicleCategory(
+    onCategoryClick: (String) -> Unit = {}
+) {
     val categories = listOf(
         CategoryItem(R.drawable.motorhome, "모터홈"),
+        CategoryItem(R.drawable.camping_van, "카라반"),
         CategoryItem(R.drawable.trailer, "트레일러"),
-        CategoryItem(R.drawable.category, "픽업캠퍼"),
-        CategoryItem(R.drawable.camping_van, "캠핑밴")
+        CategoryItem(R.drawable.category, "픽업캠퍼")
     )
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Filled.DirectionsCar,
@@ -54,18 +57,29 @@ fun VehicleCategory() {
             columns = GridCells.Fixed(4),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.height(120.dp) // Grid 높이 제한 (필요 시 조정)
+            modifier = Modifier.height(120.dp)
         ) {
             items(categories) { category ->
-                VehicleCategoryItem(category.imageRes, category.title)
+                VehicleCategoryItem(
+                    imageRes = category.imageRes,
+                    title = category.title,
+                    onClick = { onCategoryClick(category.title) }
+                )
             }
         }
     }
 }
 
 @Composable
-fun VehicleCategoryItem(imageRes: Int, title: String) {
-    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+fun VehicleCategoryItem(
+    imageRes: Int,
+    title: String,
+    onClick: () -> Unit = {}
+) {
+    Column(
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+        modifier = Modifier.clickable { onClick() }
+    ) {
         Image(
             painter = painterResource(id = imageRes),
             contentDescription = title,

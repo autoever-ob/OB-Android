@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -25,12 +26,19 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.ui.graphics.toArgb
 import com.nobody.campick.R
+import com.nobody.campick.activities.MainTabActivity
 import com.nobody.campick.adapters.VehicleImageAdapter
 import com.nobody.campick.databinding.FragmentVehicleRegistrationBinding
 import com.nobody.campick.resources.theme.AppColors
 import com.nobody.campick.viewmodels.VehicleRegistrationViewModel
 import com.nobody.campick.views.components.VehicleSelectionDialog
 import com.nobody.campick.views.components.VehicleMultiSelectionDialog
+import com.nobody.campick.views.components.CommonHeader
+import com.nobody.campick.views.components.YearPickerDialog
+import com.nobody.campick.views.components.LocationPickerDialog
+import com.nobody.campick.views.components.MileagePickerDialog
+import com.nobody.campick.views.components.VehicleOptionsPickerDialog
+import com.nobody.campick.views.components.VehicleTypeModelPickerDialog
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.DecimalFormat
@@ -46,6 +54,15 @@ class VehicleRegistrationFragment : Fragment() {
 
     companion object {
         private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
+        private const val ARG_EDITING_PRODUCT_ID = "editing_product_id"
+
+        fun newInstance(editingProductId: String): VehicleRegistrationFragment {
+            return VehicleRegistrationFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_EDITING_PRODUCT_ID, editingProductId)
+                }
+            }
+        }
     }
 
     private lateinit var imageAdapter: VehicleImageAdapter
@@ -71,7 +88,8 @@ class VehicleRegistrationFragment : Fragment() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                viewModel.addVehicleImage(uri)
+                println("📱 갤러리에서 이미지 선택됨: $uri")
+                viewModel.addVehicleImageAndUpload(uri, requireContext())
             }
         }
     }
@@ -83,7 +101,8 @@ class VehicleRegistrationFragment : Fragment() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             tempCameraImageUri?.let { uri ->
-                viewModel.addVehicleImage(uri)
+                println("📸 카메라에서 이미지 촬영됨: $uri")
+                viewModel.addVehicleImageAndUpload(uri, requireContext())
             }
         }
     }
@@ -93,7 +112,8 @@ class VehicleRegistrationFragment : Fragment() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                viewModel.addVehicleImageAsMain(uri)
+                println("🖼️ 메인 이미지 선택됨: $uri")
+                viewModel.addVehicleImageAsMainAndUpload(uri, requireContext())
             }
         }
     }
@@ -113,25 +133,49 @@ class VehicleRegistrationFragment : Fragment() {
         // IME 설정 강제 적용
         activity?.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 
+        // 수정 모드 확인 (iOS VehicleRegistrationView와 동일)
+        val editingProductId = arguments?.getString(ARG_EDITING_PRODUCT_ID)
+        val isEditMode = editingProductId != null
+
+        println("🔧 Fragment 생성: editingProductId=$editingProductId, isEditMode=$isEditMode")
+
+        if (editingProductId != null) {
+            println("🔧 수정 모드로 진입: productId=$editingProductId")
+            viewModel.loadProductForEdit(editingProductId)
+        }
+
+        setupHeader(isEditMode)
         setupRecyclerViews()
         setupTextWatchers()
         setupClickListeners()
         observeViewModel()
     }
 
+    private fun setupHeader(isEditMode: Boolean) {
+        println("📌 setupHeader 호출: isEditMode=$isEditMode")
+        val headerTitle = if (isEditMode) "매물 수정" else "매물 등록"
+        println("📌 헤더 제목 설정: '$headerTitle', 뒤로가기 버튼: $isEditMode")
+
+        binding.commonHeader.setupHeader(
+            type = CommonHeader.HeaderType.Navigation(
+                title = headerTitle,
+                showBackButton = isEditMode,
+                showRightButton = false
+            ),
+            onBackClick = {
+                // 수정 모드에서 뒤로가기: Activity 종료 (VehicleDetailActivity로 돌아감)
+                activity?.finish()
+            }
+        )
+    }
+
     private fun setupRecyclerViews() {
         imageAdapter = VehicleImageAdapter(
-            onGalleryClick = {
-                openImagePicker()
-            },
-            onCameraClick = {
-                openCamera()
-            },
-            onMainImageClick = {
-                openMainImagePicker()
+            onAddImageClick = { view ->
+                showImageSourcePopup(view)
             },
             onImageClick = { imageId ->
-                viewModel.setMainImage(imageId)
+                // 이미지 클릭은 더 이상 사용하지 않음 (메인 이미지 설정으로 대체)
             },
             onImageRemove = { imageId ->
                 viewModel.removeVehicleImage(imageId)
@@ -142,8 +186,13 @@ class VehicleRegistrationFragment : Fragment() {
         )
 
         binding.recyclerViewImages.apply {
-            layoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 3)
+            val gridLayoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 3)
+            gridLayoutManager.isAutoMeasureEnabled = true
+            layoutManager = gridLayoutManager
             adapter = imageAdapter
+            setHasFixedSize(false)
+            isNestedScrollingEnabled = false
+            overScrollMode = View.OVER_SCROLL_NEVER
         }
     }
 
@@ -157,12 +206,12 @@ class VehicleRegistrationFragment : Fragment() {
 
         binding.editTextTitle.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                println("Title text changing: $s")
-            }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                println("Title text changed: ${s.toString()}")
-                viewModel.updateTitle(s.toString())
+                val newValue = s.toString()
+                if (viewModel.title.value != newValue) {
+                    viewModel.updateTitle(newValue)
+                }
             }
         })
 
@@ -171,6 +220,11 @@ class VehicleRegistrationFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 val plateNumber = s.toString()
+
+                // ViewModel에 값 업데이트 (값이 다를 때만)
+                if (viewModel.plateHash.value != plateNumber) {
+                    viewModel.updatePlateHash(plateNumber)
+                }
 
                 // 실시간 검증 및 아이콘 표시
                 if (plateNumber.isNotEmpty()) {
@@ -193,24 +247,6 @@ class VehicleRegistrationFragment : Fragment() {
             }
         })
 
-        binding.editTextGeneration.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                viewModel.updateGeneration(s.toString())
-            }
-        })
-
-        binding.editTextMileage.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                val input = s.toString().replace(",", "")
-                if (input != viewModel.mileage.value.replace(",", "")) {
-                    viewModel.updateMileage(input)
-                }
-            }
-        })
 
         binding.editTextPrice.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -223,30 +259,48 @@ class VehicleRegistrationFragment : Fragment() {
             }
         })
 
-        binding.editTextLocation.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                viewModel.updateLocation(s.toString())
-            }
-        })
 
         binding.editTextDescription.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                viewModel.updateDescription(s.toString())
+                val newValue = s.toString()
+                if (viewModel.description.value != newValue) {
+                    viewModel.updateDescription(newValue)
+                }
             }
         })
     }
 
     private fun setupClickListeners() {
-        binding.buttonVehicleType.setOnClickListener {
-            showVehicleTypeDialog()
+        binding.buttonVehicleModel.setOnClickListener {
+            showVehicleTypeModelPickerDialog()
         }
 
-        binding.buttonVehicleModel.setOnClickListener {
-            showVehicleModelDialog()
+        binding.buttonYear.setOnClickListener {
+            showYearPickerDialog()
+        }
+
+        binding.editTextMileage.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val text = s.toString().replace(",", "")
+                if (text.isNotEmpty()) {
+                    val formatted = formatNumberWithComma(text)
+                    if (formatted != s.toString()) {
+                        binding.editTextMileage.removeTextChangedListener(this)
+                        binding.editTextMileage.setText(formatted)
+                        binding.editTextMileage.setSelection(formatted.length)
+                        binding.editTextMileage.addTextChangedListener(this)
+                    }
+                }
+                viewModel.updateMileage(text)
+            }
+        })
+
+        binding.buttonLocation.setOnClickListener {
+            showLocationPickerDialog()
         }
 
         binding.buttonVehicleOptions.setOnClickListener {
@@ -254,7 +308,19 @@ class VehicleRegistrationFragment : Fragment() {
         }
 
         binding.buttonSubmit.setOnClickListener {
+            println("🔘 매물등록 버튼 클릭됨")
             viewModel.handleSubmit()
+            println("📋 폼 검증 완료, 오류 개수: ${viewModel.errors.value.size}")
+            viewModel.errors.value.forEach { (key, message) ->
+                println("❌ 검증 오류 - $key: $message")
+            }
+
+            if (viewModel.isValidForSubmission()) {
+                println("✅ 폼 검증 통과, API 호출 시작")
+                viewModel.submitVehicleRegistration(requireContext())
+            } else {
+                println("❌ 폼 검증 실패, API 호출하지 않음")
+            }
         }
     }
 
@@ -268,13 +334,13 @@ class VehicleRegistrationFragment : Fragment() {
 
         lifecycleScope.launch {
             viewModel.vehicleType.collect { type ->
-                binding.buttonVehicleType.text = type.ifEmpty { "차량 종류 선택" }
+                updateVehicleTypeModelButtonText()
             }
         }
 
         lifecycleScope.launch {
             viewModel.vehicleModel.collect { model ->
-                binding.buttonVehicleModel.text = model.ifEmpty { "차량 브랜드/모델 선택" }
+                updateVehicleTypeModelButtonText()
             }
         }
 
@@ -285,11 +351,34 @@ class VehicleRegistrationFragment : Fragment() {
         }
 
         lifecycleScope.launch {
+            viewModel.generation.collect { year ->
+                binding.buttonYear.text = if (year.isNotEmpty()) "${year}년" else "연식 선택"
+                binding.buttonYear.setTextColor(
+                    if (year.isNotEmpty())
+                        ContextCompat.getColor(requireContext(), R.color.primary_text)
+                    else
+                        ContextCompat.getColor(requireContext(), R.color.brand_white_60)
+                )
+            }
+        }
+
+        lifecycleScope.launch {
             viewModel.mileage.collect { mileage ->
-                if (binding.editTextMileage.text.toString() != mileage) {
-                    binding.editTextMileage.setText(mileage)
-                    binding.editTextMileage.setSelection(mileage.length)
+                if (binding.editTextMileage.text.toString().replace(",", "") != mileage) {
+                    binding.editTextMileage.setText(formatNumberWithComma(mileage))
                 }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.location.collect { location ->
+                binding.buttonLocation.text = if (location.isNotEmpty()) location else "판매 지역 선택"
+                binding.buttonLocation.setTextColor(
+                    if (location.isNotEmpty())
+                        ContextCompat.getColor(requireContext(), R.color.primary_text)
+                    else
+                        ContextCompat.getColor(requireContext(), R.color.brand_white_60)
+                )
             }
         }
 
@@ -298,6 +387,79 @@ class VehicleRegistrationFragment : Fragment() {
                 if (binding.editTextPrice.text.toString() != price) {
                     binding.editTextPrice.setText(price)
                     binding.editTextPrice.setSelection(price.length)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.title.collect { title ->
+                println("🔄 Title StateFlow 업데이트: '$title'")
+                if (binding.editTextTitle.text.toString() != title) {
+                    println("✏️ EditText에 title 설정: '$title'")
+                    binding.editTextTitle.setText(title)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.description.collect { description ->
+                println("🔄 Description StateFlow 업데이트: '$description'")
+                if (binding.editTextDescription.text.toString() != description) {
+                    println("✏️ EditText에 description 설정")
+                    binding.editTextDescription.setText(description)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.plateHash.collect { plate ->
+                println("🔄 PlateHash StateFlow 업데이트: '$plate'")
+                if (binding.editTextPlateNumber.text.toString() != plate) {
+                    println("✏️ EditText에 plate 설정: '$plate'")
+                    binding.editTextPlateNumber.setText(plate)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.showSuccessAlert.collect { show ->
+                if (show) {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("성공")
+                        .setMessage(viewModel.alertMessage.value)
+                        .setPositiveButton("확인") { _, _ ->
+                            viewModel.dismissSuccessAlert()
+                            // 등록/수정 성공 시 홈 탭으로 이동 (iOS와 동일)
+                            (activity as? com.nobody.campick.activities.MainTabActivity)?.navigateToHome()
+                        }
+                        .show()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.showErrorAlert.collect { show ->
+                if (show) {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("오류")
+                        .setMessage(viewModel.alertMessage.value)
+                        .setPositiveButton("확인") { _, _ ->
+                            viewModel.dismissErrorAlert()
+                        }
+                        .show()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.isSubmitting.collect { isSubmitting ->
+                binding.buttonSubmit.isEnabled = !isSubmitting
+                val editingProductId = arguments?.getString(ARG_EDITING_PRODUCT_ID)
+                binding.buttonSubmit.text = when {
+                    isSubmitting && editingProductId != null -> "수정 중..."
+                    isSubmitting -> "등록 중..."
+                    editingProductId != null -> "매물 수정"
+                    else -> "매물 등록"
                 }
             }
         }
@@ -405,42 +567,66 @@ class VehicleRegistrationFragment : Fragment() {
         }
     }
 
-    private fun showVehicleTypeDialog() {
-        val types = viewModel.availableTypes.value
+    private fun showVehicleTypeModelPickerDialog() {
         val currentType = viewModel.vehicleType.value
+        val currentModel = viewModel.vehicleModel.value
+        val availableTypes = viewModel.availableTypes.value
 
-        VehicleSelectionDialog(
+        VehicleTypeModelPickerDialog(
             context = requireContext(),
-            title = "차량 종류 선택",
-            options = types,
-            selectedOption = currentType.ifEmpty { null }
-        ) { selectedType ->
-            viewModel.updateVehicleType(selectedType)
+            lifecycleOwner = viewLifecycleOwner,
+            selectedType = currentType,
+            selectedModel = currentModel,
+            availableTypes = availableTypes,
+            onTypeModelSelected = { type: String, model: String ->
+                viewModel.updateVehicleType(type)
+                viewModel.updateVehicleModel(model)
+            }
+        ).show()
+    }
+
+    private fun updateVehicleTypeModelButtonText() {
+        val type = viewModel.vehicleType.value
+        val model = viewModel.vehicleModel.value
+
+        val displayText = when {
+            type.isEmpty() -> "차량 종류와 모델을 선택하세요"
+            model.isEmpty() -> "$type → 모델 선택"
+            else -> "$type → $model"
+        }
+
+        binding.buttonVehicleModel.text = displayText
+        binding.buttonVehicleModel.setTextColor(
+            if (type.isEmpty())
+                ContextCompat.getColor(requireContext(), R.color.brand_white_60)
+            else
+                ContextCompat.getColor(requireContext(), R.color.primary_text)
+        )
+    }
+
+    private fun showYearPickerDialog() {
+        val currentYear = viewModel.generation.value.toIntOrNull()
+        YearPickerDialog(requireContext(), currentYear) { selectedYear ->
+            viewModel.updateGeneration(selectedYear.toString())
         }.show()
     }
 
-    private fun showVehicleModelDialog() {
-        val models = viewModel.availableModels.value
-        val currentModel = viewModel.vehicleModel.value
+    private fun showMileagePickerDialog() {
+        val currentMileage = viewModel.mileage.value.replace(",", "").toIntOrNull()
+        MileagePickerDialog(requireContext(), currentMileage) { selectedMileage ->
+            viewModel.updateMileage(numberFormatter.format(selectedMileage))
+        }.show()
+    }
 
-        VehicleSelectionDialog(
-            context = requireContext(),
-            title = "차량 브랜드/모델 선택",
-            options = models,
-            selectedOption = currentModel.ifEmpty { null }
-        ) { selectedModel ->
-            viewModel.updateVehicleModel(selectedModel)
+    private fun showLocationPickerDialog() {
+        val currentLocation = viewModel.location.value
+        LocationPickerDialog(requireContext(), currentLocation) { selectedLocation ->
+            viewModel.updateLocation(selectedLocation)
         }.show()
     }
 
     private fun showVehicleOptionsDialog() {
-        val options = viewModel.vehicleOptions.value
-
-        VehicleMultiSelectionDialog(
-            context = requireContext(),
-            title = "차량 옵션 선택",
-            options = options
-        ) { updatedOptions ->
+        VehicleOptionsPickerDialog(requireContext(), viewModel.vehicleOptions.value) { updatedOptions ->
             viewModel.updateVehicleOptions(updatedOptions)
         }.show()
     }
@@ -466,6 +652,33 @@ class VehicleRegistrationFragment : Fragment() {
     private fun updateErrorStates(errors: Map<String, String>) {
         // Error state updates can be implemented here
         // Similar to the Activity version
+    }
+
+    private fun showImageSourcePopup(anchorView: View) {
+        val popup = PopupMenu(requireContext(), anchorView)
+        popup.menuInflater.inflate(R.menu.image_source_menu, popup.menu)
+
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.menu_gallery -> {
+                    openImagePicker()
+                    true
+                }
+                R.id.menu_camera -> {
+                    openCamera()
+                    true
+                }
+                else -> false
+            }
+        }
+
+        popup.show()
+    }
+
+    private fun formatNumberWithComma(number: String): String {
+        if (number.isEmpty()) return ""
+        val numberValue = number.toLongOrNull() ?: return number
+        return String.format("%,d", numberValue)
     }
 
     override fun onDestroyView() {

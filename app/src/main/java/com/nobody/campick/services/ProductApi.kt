@@ -77,7 +77,7 @@ object ProductApi {
      * 추천 상품 조회
      */
     suspend fun getRecommendedVehicles(): ApiResult<List<RecommendedVehicle>> {
-        return APIService.get<RecommendResponse>(
+        return APIService.getDirect<RecommendResponse>(
             endpoint = Endpoint.CarRecommend
         ).map { response ->
             listOf(

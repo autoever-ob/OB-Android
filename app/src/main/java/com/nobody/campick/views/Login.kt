@@ -28,7 +28,8 @@ import com.nobody.campick.viewmodels.LoginViewModel
 @Composable
 fun Login(
     navController: NavController,
-    viewModel: LoginViewModel
+    viewModel: LoginViewModel,
+    onSignupClick: () -> Unit = {}
 ) {
     val email by viewModel.email.collectAsState()
     val password by viewModel.password.collectAsState()
@@ -185,7 +186,7 @@ fun Login(
                     color = Color(0xFFFF6F00),
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable {
-                        navController.navigate("signupFlow")
+                        onSignupClick()
                     }
                 )
             }
@@ -200,7 +201,7 @@ fun Login(
             text = { Text("Campick과 함께 새로운 계정을 만들어보세요.") },
             confirmButton = {
                 TextButton(onClick = {
-                    navController.navigate("signupFlow")
+                    onSignupClick()
                     viewModel.dismissSignupPrompt()
                 }) { Text("Campick과 함께하기") }
             },
