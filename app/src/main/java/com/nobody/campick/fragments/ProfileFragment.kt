@@ -42,6 +42,7 @@ class ProfileFragment : Fragment() {
     private lateinit var productAdapter: ProfileProductAdapter
 
     private var isOwnProfile: Boolean = true
+    private var currentEditDialog: ProfileEditDialog? = null
 
     // 이미지 피커를 위한 ActivityResultLauncher
     private val imagePickerLauncher = registerForActivityResult(
@@ -231,7 +232,13 @@ class ProfileFragment : Fragment() {
             // 프로필 업데이트 성공 관찰
             viewModel.profileUpdateSuccess.collect { success ->
                 if (success) {
-                    Toast.makeText(requireContext(), "프로필이 업데이트되었습니다", Toast.LENGTH_SHORT).show()
+                    // 로딩 상태 해제 및 다이얼로그 닫기
+                    currentEditDialog?.setLoading(false)
+                    currentEditDialog?.dismiss()
+                    currentEditDialog = null
+
+                    // 성공 다이얼로그 표시
+                    showProfileUpdateSuccessDialog()
                     viewModel.clearProfileUpdateSuccess()
                 }
             }
@@ -424,20 +431,20 @@ class ProfileFragment : Fragment() {
 
     private fun showEditProfileDialog() {
         viewModel.profileData.value?.let { profile ->
-            val editDialog = ProfileEditDialog(
+            currentEditDialog = ProfileEditDialog(
                 context = requireContext(),
                 profile = profile,
                 onSave = { nickname, description, phoneNumber ->
                     viewModel.updateProfileInfo(nickname, phoneNumber, description)
                 },
                 onCancel = {
-                    // 취소시 특별한 처리가 필요하지 않음
+                    currentEditDialog = null
                 },
                 onImagePickerNeeded = {
                     openImagePicker()
                 }
             )
-            editDialog.show()
+            currentEditDialog?.show()
         }
     }
 
@@ -446,6 +453,17 @@ class ProfileFragment : Fragment() {
         Toast.makeText(requireContext(), "채팅 시작: $userId", Toast.LENGTH_SHORT).show()
     }
 
+    private fun showProfileUpdateSuccessDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("프로필 수정 완료")
+            .setMessage("프로필이 성공적으로 수정되었습니다.")
+            .setPositiveButton("확인") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(false)
+            .create()
+            .show()
+    }
 
     private fun showLogoutConfirmDialog() {
         val logoutDialog = LogoutDialog(
