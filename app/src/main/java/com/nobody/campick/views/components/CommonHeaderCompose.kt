@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nobody.campick.resources.theme.AppColors
+import com.nobody.campick.ui.theme.CampickBrandFontFamily
 
 sealed class HeaderType {
     object Brand : HeaderType()
@@ -84,6 +85,7 @@ private fun BrandHeader(
             text = "Campick",
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
+            fontFamily = CampickBrandFontFamily,
             color = AppColors.primaryText,
             modifier = Modifier.weight(1f)
         )
