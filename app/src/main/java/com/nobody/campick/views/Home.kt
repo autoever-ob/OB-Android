@@ -112,12 +112,11 @@ fun Home() {
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 AutoSlidingBanner()
                 FindVehicle(onClick = navigateToFindVehicle)
                 VehicleCategory(onCategoryClick = navigateToFindVehicleWithFilter)
-                Spacer(modifier = Modifier.height((-24).dp))
                 RecommendVehicle(
                     onVehicleClick = navigateToVehicleDetail,
                     onViewAllClick = navigateToFindVehicle
