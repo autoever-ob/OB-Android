@@ -13,16 +13,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.nobody.campick.resources.theme.AppColors
+import com.nobody.campick.ui.theme.CampickBrandFontFamily
 import com.nobody.campick.viewmodels.LoginViewModel
 
 @Composable
@@ -57,7 +63,9 @@ fun Login(
                 text = "Campick",
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = Color.White,
+                    fontFamily = CampickBrandFontFamily,
+                    fontSize = 40.sp
                 )
             )
             Text(
@@ -198,12 +206,22 @@ fun Login(
         AlertDialog(
             onDismissRequest = { viewModel.dismissSignupPrompt() },
             title = { Text("존재하지 않는 사용자입니다.") },
-            text = { Text("Campick과 함께 새로운 계정을 만들어보세요.") },
+            text = {
+                Text(
+                    buildCampickBrandString(
+                        trailing = "과 함께 새로운 계정을 만들어보세요."
+                    )
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     onSignupClick()
                     viewModel.dismissSignupPrompt()
-                }) { Text("Campick과 함께하기") }
+                }) {
+                    Text(
+                        buildCampickBrandString(trailing = "과 함께하기")
+                    )
+                }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissSignupPrompt() }) { Text("닫기") }
@@ -219,6 +237,21 @@ fun Login(
                 TextButton(onClick = { viewModel.dismissServerAlert() }) { Text("확인") }
             }
         )
+    }
+}
+
+private fun buildCampickBrandString(
+    leading: String = "",
+    trailing: String = ""
+): AnnotatedString = buildAnnotatedString {
+    if (leading.isNotEmpty()) {
+        append(leading)
+    }
+    withStyle(SpanStyle(fontFamily = CampickBrandFontFamily)) {
+        append("Campick")
+    }
+    if (trailing.isNotEmpty()) {
+        append(trailing)
     }
 }
 
