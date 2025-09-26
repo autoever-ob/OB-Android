@@ -16,12 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.nobody.campick.managers.UserState
 import com.nobody.campick.resources.theme.AppColors
+import com.nobody.campick.ui.theme.CampickBrandFontFamily
 
 @Composable
 fun Header(
@@ -42,7 +42,7 @@ fun Header(
         Text(
             text = "Campick",
             fontSize = 30.sp,
-            fontFamily = FontFamily.Cursive,
+            fontFamily = CampickBrandFontFamily,
             color = Color.White
         )
 
