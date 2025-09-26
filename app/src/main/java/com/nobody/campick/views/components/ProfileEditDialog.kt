@@ -154,15 +154,27 @@ class ProfileEditDialog(
     }
 
     private fun loadProfileData() {
+        // 닉네임 설정
         editTextNickname.setText(profile.nickname)
-        editTextDescription.setText(profile.description ?: "")
-        editTextPhoneNumber.setText(profile.mobileNumber ?: "")
 
+        // 설명 설정 및 글자 수 표시
+        editTextDescription.setText(profile.description ?: "")
+        val characterCount = findViewById<TextView>(R.id.textViewCharacterCount)
+        characterCount.text = "${profile.description?.length ?: 0} / 500"
+
+        // 전화번호 설정 (포맷팅 적용)
+        val phoneNumber = profile.mobileNumber ?: ""
+        if (phoneNumber.isNotEmpty()) {
+            editTextPhoneNumber.setText(formatPhoneNumber(phoneNumber))
+        }
+
+        // 프로필 이미지 설정
         if (!profile.profileImage.isNullOrEmpty()) {
             Glide.with(context)
                 .load(profile.profileImage)
                 .placeholder(R.drawable.ic_person)
                 .error(R.drawable.ic_person)
+                .circleCrop()
                 .into(profileImageView)
         } else {
             profileImageView.setImageResource(R.drawable.ic_person)

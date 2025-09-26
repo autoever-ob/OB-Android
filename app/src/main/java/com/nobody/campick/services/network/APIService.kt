@@ -331,15 +331,6 @@ object APIService {
                 println("✅ Successfully parsed ApiResponse")
 
                 when {
-                    apiResponse.success && apiResponse.data != null -> {
-                        println("✅ Success with data")
-                        ApiResult.Success(apiResponse.data)
-                    }
-                    apiResponse.success && T::class == Unit::class -> {
-                        println("✅ Success without data (Unit)")
-                        @Suppress("UNCHECKED_CAST")
-                        ApiResult.Success(Unit as T)
-                    }
                     !apiResponse.success -> {
                         // 서버에서 success: false로 응답한 경우
                         println("❌ Server returned success: false")
@@ -347,6 +338,21 @@ object APIService {
                             TokenManager.clearTokens()
                         }
                         ApiResult.Error(apiResponse.message)
+                    }
+                    apiResponse.data != null -> {
+                        println("✅ Success with data")
+                        ApiResult.Success(apiResponse.data)
+                    }
+                    T::class == Unit::class -> {
+                        println("✅ Success without data (Unit)")
+                        @Suppress("UNCHECKED_CAST")
+                        ApiResult.Success(Unit as T)
+                    }
+                    T::class == String::class -> {
+                        // String 타입이고 data가 없는 경우, message를 반환
+                        println("✅ Success without data (String) - returning message")
+                        @Suppress("UNCHECKED_CAST")
+                        ApiResult.Success(apiResponse.message as T)
                     }
                     else -> {
                         println("❌ No data in successful response")
